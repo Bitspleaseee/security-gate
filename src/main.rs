@@ -218,7 +218,7 @@ fn comment(cookies: Cookies, input: Form<NewComment>) -> String {
     else {
         let ret = OkResponse {
             ok: false,
-            message: ""
+            message: "Wrong input."
         }
         JSON(ret);
     }
@@ -235,7 +235,7 @@ fn addThread(cookies: Cookies, input: Form<NewThread>) -> String {
     else {
         let ret = OkResponse {
             ok: false,
-            message: ""
+            message: "Wrong input."
         }
         JSON(ret);
     }
@@ -252,7 +252,7 @@ fn addCategory(cookies: Cookies, input: Form<NewCategory>) -> String {
     else {
         let ret = OkResponse {
             ok: false,
-            message: ""
+            message: "Wrong input."
         }
         JSON(ret);
     }
@@ -263,21 +263,22 @@ fn addCategory(cookies: Cookies, input: Form<NewCategory>) -> String {
 fn editUser(cookies: Cookies, input: Form<User>) -> JSON<OkResponse> {
     //result = verifyUser(cookies.get_private("user_token"))
     if result.ok == true {
-        //bool ret1 = auth.editUser(input, result.id);
-        //bool ret2 = controller.editUser(input, result.id);
+        //let ret1 = auth.editUser(input, result.id);
+        //let ret2 = controller.editUser(input, result.id);
         let ret = OkResponse {
             ok: false,
-            message: ""
+            message: "Wrong input"
         }
-        if ret1 == true && ret2 == true {
+        if ret1.ok == true && ret2.ok == true {           // Check that both functions worked correctly
             ret.ok = true;
+            ret.message = "";
         }
         JSON(ret);
     }
     else {
         let ret = OkResponse {
             ok: false,
-            message: ""
+            message: "Wrong input."
         }
         JSON(ret);
     }
