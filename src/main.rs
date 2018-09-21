@@ -11,6 +11,9 @@ use std::convert::{TryFrom, TryInto};
 use rocket::http::{Cookies, RawStr};
 use rocket::request::FromFormValue;
 use regex::Regex;
+use rocket::response::content::Content;
+use rocket::http::ContentType;
+
 
 /// The regex which vertifies that a username is formatted correctly
 const USERNAME_REGEX: &'static str = "^[a-zA-Z0-9_-]{4,10}$";
@@ -25,6 +28,15 @@ impl<'v> FromFormValue<'v> for Username {
         value.as_str().try_into().map_err(|_| value)
     }
 }
+
+impl<'v> FromFormValue<'v> for Password {
+    type Error = &'v RawStr;
+
+    fn from_form_value(value: &'v RawStr) -> Result<Password, Self::Error> {
+        value.as_str().try_into().map_err(|_| value)
+    }
+}
+
 
 impl<'v> TryFrom<&'v str> for Username {
     type Error = &'v str;
@@ -42,16 +54,74 @@ impl<'v> TryFrom<&'v str> for Username {
 
 }
 
-#[derive_FromForm]
-struct LogIn {
-    username: Username,
-    password: String,
+impl<'v> TryFrom<&'v str> for Password {
+    type Error = &'v str;
+
+    fn try_from(s: &'v str) -> Result<Password, Self::Error> {
+        lazy_static! {
+            static ref RE: Regex = Regex::new(USERNAME_REGEX).unwrap();
+        }
+        if RE.is_match(s) {
+            Ok(Password(s.into()))
+        } else {
+            Err(s)
+        }
+    }
+
+}
+
+struct LogInResponse {
+    ok: bool,
+    id: u32,
+    token: String
+}
+
+struct OkResponse {
+    ok: bool
 }
 
 #[derive_FromForm]
-struct CommentThread {
+struct LogIn {
+    username: Result<Username, &'vRawStr>,
+    password: Result<Password, &'vRawStr>
+}
+
+#[derive_FromForm]
+struct NewComment {
     content: String,
-    thread: i32
+    thread: u32
+}
+
+#[derive_FromForm]
+struct NewThread {
+    title: String,
+    description: String,
+    category: u32
+}
+
+#[derive_FromForm]
+struct NewCategory {
+    title: String,
+    description: String,
+}
+
+#[derive_FromForm]
+struct User {
+    username: Result<Username, &'vRawStr>,
+    password: Result<Password, &'vRawStr>,
+    email: String,
+    description: String,
+    avatar: String
+}
+
+#[catch(404)]
+fn not_found(req: &Request) -> String { 
+    "The website was not found"
+}
+
+#[catch(400)]
+fn not_found(req: &Request) -> String { 
+    "We encontered an error when processing your request"
 }
 
 #[get("/")]
@@ -61,54 +131,128 @@ fn index() -> &'static str {
 
 /// Retrieve the user's ID, if any.
 #[post("/login", data = "<input>")]
-fn login(input: Form<LogIn>) -> String {
-    // result = login(input);
-    cookies.add_private(Cookie::new("user_token", /*result.token*/));
+fn login(input: Form<LogIn>) -> Json<OkResponse> {
+    if let Ok(username) = input.username {
+        // result = login(input);
+        cookies.add_private(Cookie::new("user_token", /*result.token*/));
+        let ret = OkResponse {
+            ok: result.ok
+        };
+        Json(ret);
+    } else {
+    Failure(Status::BadRequest);
+  }
+}
+
+/// Register user.
+#[post("/register", data = "<input>")]
+fn login(input: Form<LogIn>) -> Json<OkResponse> {
+    if let Ok(username) = input.username {
+        // result = register(input);
+        let ret = OkResponse {
+            ok: result.ok
+        };
+        Json(ret);
+    } else {
+    Failure(Status::BadRequest);
+  }
 }
 
 /// Retrieve the user's profile.
 #[get("/user/<username>")]
 fn showUserProfile(cookies: Cookies, username: String) -> String {
-    //getUserProfile(username);
-    Ok("Username: {}", username);
+    //result = getUserProfile(username);
+    JSON(result);
 }
 
 /// Search.
 #[get("/search/<searchStr>")]
 fn search(cookies: Cookies, searchStr: String) -> String {
-    //search(searchStr);
-    Ok("Search string: {}", searchStr);
+    //result = search(searchStr);
+    JSON(result);
 }
 
-/// Remove the `user_token` cookie.
+/// Remove the `user_token` cookie and tell the authorization module to delete the token.
 #[post("/logout")]
-fn logout(mut cookies: Cookies) -> Flash<Redirect> {
+fn logout(mut cookies: Cookies) -> Json<OkResponse> {
     //auth.logout(cookies.get_private("user_token"))
     cookies.remove_private(Cookie::named("user_token"));
-    Flash::success(Redirect::to("/"), "Successfully logged out.")
+    let ret = OkResponse {
+        ok: true
+    };
+    JSON(ret)
 }
 
 /// Get all threads in category.
 #[get("/category/<category>")]
 fn search(cookies: Cookies, category: String) -> String {
-    //getCategory(category);
+    //let result = getCategory(category);
+    JSON(result);
 }
 
 /// Search.
 #[get("/thread/<thread>")]
 fn search(cookies: Cookies, thread: String) -> String {
-    //getThread(thread);
+    //let result = getThread(thread);
+    JSON(result);
 }
 
 /// Comment on a thread.
 #[post("/comment", data = "<input>")]
-fn comment(cookies: Cookies, input: Form<CommentThread>) -> String {
-    //result = verifyUser(cookie.get_private("user_token"))
-    if (result.ok == true) {
-        //comment(input, result.id);
+fn comment(cookies: Cookies, input: Form<NewComment>) -> String {
+    //result = verifyUser(cookies.get_private("user_token"))
+    if result.ok == true {
+        //let ret = comment(input, result.id);
+        JSON(ret);
     }
     else {
-        Err("Bad request");
+        Failure(Status::BadRequest);
+    }
+}
+
+/// Make a new thread.
+#[post("/newThread", data = "<input>")]
+fn addThread(cookies: Cookies, input: Form<NewThread>) -> String {
+    //result = verifyUser(cookies.get_private("user_token"))
+    if result.ok == true {
+        //let ret = addThread(input, result.id);
+        JSON(ret);
+    }
+    else {
+        Failure(Status::BadRequest);
+    }
+}
+
+/// Make a new thread.
+#[post("/newCategory", data = "<input>")]
+fn addCategory(cookies: Cookies, input: Form<NewCategory>) -> String {
+    //result = verifyUser(cookies.get_private("user_token"))
+    if result.ok == true {
+        //let ret = addCategory(input, result.id);
+        JSON(ret);
+    }
+    else {
+        Failure(Status::BadRequest);
+    }
+}
+
+/// Edit user
+#[post("/editUser", data = "<input>")]
+fn editUser(cookies: Cookies, input: Form<User>) -> JSON<OkResponse> {
+    //result = verifyUser(cookies.get_private("user_token"))
+    if result.ok == true {
+        //bool ret1 = auth.editUser(input, result.id);
+        //bool ret2 = controller.editUser(input, result.id);
+        let ret = OkResponse {
+            ok: false
+        }
+        if ret1 == true && ret2 == true {
+            ret.ok = true;
+        }
+        JSON(ret);
+    }
+    else {
+        Failure(Status::BadRequest);
     }
 }
 
