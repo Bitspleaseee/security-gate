@@ -140,7 +140,10 @@ fn login(input: Form<LogIn>) -> Json<OkResponse> {
         };
         Json(ret);
     } else {
-    Failure(Status::BadRequest);
+        let ret = OkResponse {
+            ok: false
+        }
+        JSON(ret)
   }
 }
 
@@ -154,7 +157,10 @@ fn login(input: Form<LogIn>) -> Json<OkResponse> {
         };
         Json(ret);
     } else {
-    Failure(Status::BadRequest);
+        let ret = OkResponse {
+            ok: false
+        }
+        JSON(ret)
   }
 }
 
@@ -206,7 +212,10 @@ fn comment(cookies: Cookies, input: Form<NewComment>) -> String {
         JSON(ret);
     }
     else {
-        Failure(Status::BadRequest);
+        let ret = OkResponse {
+            ok: false
+        }
+        JSON(ret)
     }
 }
 
@@ -219,7 +228,10 @@ fn addThread(cookies: Cookies, input: Form<NewThread>) -> String {
         JSON(ret);
     }
     else {
-        Failure(Status::BadRequest);
+        let ret = OkResponse {
+            ok: false
+        }
+        JSON(ret)
     }
 }
 
@@ -232,7 +244,10 @@ fn addCategory(cookies: Cookies, input: Form<NewCategory>) -> String {
         JSON(ret);
     }
     else {
-        Failure(Status::BadRequest);
+        let ret = OkResponse {
+            ok: false
+        }
+        JSON(ret)
     }
 }
 
@@ -252,7 +267,10 @@ fn editUser(cookies: Cookies, input: Form<User>) -> JSON<OkResponse> {
         JSON(ret);
     }
     else {
-        Failure(Status::BadRequest);
+        let ret = OkResponse {
+            ok: false
+        }
+        JSON(ret)
     }
 }
 
