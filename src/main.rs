@@ -45,6 +45,7 @@ fn search(cookies: Cookies, searchStr: String) -> String {
 /// Remove the `user_token` cookie.
 #[post("/logout")]
 fn logout(mut cookies: Cookies) -> Flash<Redirect> {
+    //auth.logout(cookies.get_private("user_token"))
     cookies.remove_private(Cookie::named("user_token"));
     Flash::success(Redirect::to("/"), "Successfully logged out.")
 }
