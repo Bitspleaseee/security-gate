@@ -1,16 +1,54 @@
 #![feature(plugin)]
+#![feature(try_from)]
 #![plugin(rocket_codegen)]
 
+#[macro_use]
+extern crate lazy_static;
+extern crate regex;
 extern crate rocket;
-use rocket::http::Cookies;
 
-#[derive(FromForm)]
+use std::convert::{TryFrom, TryInto};
+use rocket::http::{Cookies, RawStr};
+use rocket::request::FromFormValue;
+use regex::Regex;
+
+/// The regex which vertifies that a username is formatted correctly
+const USERNAME_REGEX: &'static str = "^[a-zA-Z0-9_-]{4,10}$";
+
+/// A valid username based on a regex
+struct Username(String);
+
+impl<'v> FromFormValue<'v> for Username {
+    type Error = &'v RawStr;
+
+    fn from_form_value(value: &'v RawStr) -> Result<Username, Self::Error> {
+        value.as_str().try_into().map_err(|_| value)
+    }
+}
+
+impl<'v> TryFrom<&'v str> for Username {
+    type Error = &'v str;
+
+    fn try_from(s: &'v str) -> Result<Username, Self::Error> {
+        lazy_static! {
+            static ref RE: Regex = Regex::new(USERNAME_REGEX).unwrap();
+        }
+        if RE.is_match(s) {
+            Ok(Username(s.into()))
+        } else {
+            Err(s)
+        }
+    }
+
+}
+
+#[derive_FromForm]
 struct LogIn {
-    username: String,
+    username: Username,
     password: String,
 }
 
-#[derive(FromForm)]
+#[derive_FromForm]
 struct CommentThread {
     content: String,
     thread: i32
