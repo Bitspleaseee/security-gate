@@ -62,8 +62,8 @@ fn search(cookies: Cookies, thread: String) -> String {
 }
 
 /// Comment on a thread.
-#[post("/comment/", data = "<input>")]
-fn search(cookies: Cookies, input: Form<CommentThread>) -> String {
+#[post("/comment", data = "<input>")]
+fn comment(cookies: Cookies, input: Form<CommentThread>) -> String {
     //result = verifyUser(cookie.get_private("user_token"))
     if (result.ok == true) {
         //comment(input, result.id);
