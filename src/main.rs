@@ -15,7 +15,7 @@ use rocket::response::content::Content;
 use rocket::http::ContentType;
 
 
-/// The regex which vertifies that a username is formatted correctly
+/*/// The regex which vertifies that a username is formatted correctly
 const USERNAME_REGEX: &'static str = "^[a-zA-Z0-9_-]{4,10}$";
 
 /// A valid username based on a regex
@@ -140,7 +140,7 @@ fn not_found(req: &Request) -> String {
 
 fn log(message: String, remote_addr: String) {
     format!("Remote Address: {:?}", remote_addr)
-}
+}*/
 
 #[get("/")]
 fn index(remote_addr: SocketAddr) -> &'static str {
@@ -497,7 +497,5 @@ fn adminUsergroups(cookies: Cookies, input: Form<AdminUsergroups>, remote_addr: 
 }*/
 
 fn main() {
-    rocket::ignite().mount("/", routes![index/*, login, register, showUserProfile, search, logout, 
-        getAllCategories, getCategory, getThread, comment, addCategory, addThread, editUser, uploadAvatar,
-        editCategory, editThread, editComment, hideCategory, hideThread, hideComment, adminUsergroups*/]).launch();
+    rocket::ignite().mount("/", routes![index/*, login, register, showUserProfile, search, logout, getAllCategories, getCategory, getThread, comment, addCategory, addThread, editUser, uploadAvatar, editCategory, editThread, editComment, hideCategory, hideThread, hideComment, adminUsergroups*/]).launch();
 }
