@@ -1,0 +1,22 @@
+language: rust
+rust: nightly
+cache: cargo
+branches:
+  only:
+  - master
+jobs:
+  include:
+    - stage: build
+      script:
+        - cargo build --verbose
+    - stage: tests
+      script:
+        - cargo test --verbose
+    - stage: tests
+      script:
+        - rustup component add rustfmt-preview
+        - cargo fmt -v -- --check
+    - stage: tests
+      script:
+        - rustup component add clippy-preview
+        - touch ./src/main.rs && cargo clippy -- -D warnings
