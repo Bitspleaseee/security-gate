@@ -15,7 +15,7 @@ use rocket::response::content::Content;
 use rocket::http::ContentType;
 
 
-/*/// The regex which vertifies that a username is formatted correctly
+/// The regex which vertifies that a username is formatted correctly
 const USERNAME_REGEX: &'static str = "^[a-zA-Z0-9_-]{4,10}$";
 
 /// A valid username based on a regex
@@ -29,14 +29,14 @@ impl<'v> FromFormValue<'v> for Username {
     }
 }
 
-impl<'v> FromFormValue<'v> for Password {
+/*impl<'v> FromFormValue<'v> for Password {
     type Error = &'v RawStr;
 
     fn from_form_value(value: &'v RawStr) -> Result<Password, Self::Error> {
         value.as_str().try_into().map_err(|_| value)
     }
 }
-
+*/
 
 impl<'v> TryFrom<&'v str> for Username {
     type Error = &'v str;
@@ -54,7 +54,7 @@ impl<'v> TryFrom<&'v str> for Username {
 
 }
 
-impl<'v> TryFrom<&'v str> for Password {
+/*impl<'v> TryFrom<&'v str> for Password {
     type Error = &'v str;
 
     fn try_from(s: &'v str) -> Result<Password, Self::Error> {
@@ -68,7 +68,7 @@ impl<'v> TryFrom<&'v str> for Password {
         }
     }
 
-}
+}*/
 
 struct LogInResponse {
     ok: bool,
@@ -82,9 +82,9 @@ struct OkResponse {
 }
 
 #[derive_FromForm]
-struct LogIn {
-    username: Result<Username, &'vRawStr>,
-    password: Result<Password, &'vRawStr>
+struct LogIn<'v> {
+    username: Result<Username, &'v RawStr>,
+    password: String //Result<Password, &'v RawStr>
 }
 
 #[derive_FromForm]
@@ -113,9 +113,9 @@ struct AdminUsergroups {
 }
 
 #[derive_FromForm]
-struct User {
-    username: Result<Username, &'vRawStr>,
-    password: Result<Password, &'vRawStr>,
+struct User<'v> {
+    username: Result<Username, &'v RawStr>,
+    password: String, //Result<Password, &'v RawStr>,
     email: String,
     description: String,
     role: String,
@@ -124,27 +124,27 @@ struct User {
 
 #[derive_FromForm]
 struct Avatar {
-    avatar: String
+    avatar: String,
     uid: u32
 }
 
-#[catch(404)]
+/*#[catch(404)]
 fn not_found(req: &Request) -> String { 
-    "The website was not found"
+    "The website was not found".toString()
 }
 
 #[catch(400)]
 fn not_found(req: &Request) -> String { 
-    "We encontered an error when processing your request"
-}
+    "We encontered an error when processing your request".toString()
+}*/
 
-fn log(message: String, remote_addr: String) {
+/*fn log(message: String, remote_addr: String) {
     format!("Remote Address: {:?}", remote_addr)
 }*/
 
 #[get("/")]
-fn index(remote_addr: SocketAddr) -> &'static str {
-    log("Retriving webpage", remote_addr);                  // Log action.
+fn index(/*remote_addr: SocketAddr*/) -> &'static str {
+   // log("Retriving webpage", remote_addr);                  // Log action.
     "Hello, world!"
 }
 
