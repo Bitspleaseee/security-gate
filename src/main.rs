@@ -88,22 +88,28 @@ struct LogIn {
 }
 
 #[derive_FromForm]
-struct NewComment {
+struct Comment {
     content: String,
     thread: u32
 }
 
 #[derive_FromForm]
-struct NewThread {
+struct Thread {
     title: String,
     description: String,
     category: u32
 }
 
 #[derive_FromForm]
-struct NewCategory {
+struct Category {
     title: String,
-    description: String,
+    description: String
+}
+
+#[derive_FromForm]
+struct AdminUsergroups {
+    uid: u32,
+    role: String
 }
 
 #[derive_FromForm]
@@ -112,7 +118,13 @@ struct User {
     password: Result<Password, &'vRawStr>,
     email: String,
     description: String,
+    uid: u32
+}
+
+#[derive_FromForm]
+struct Avatar {
     avatar: String
+    uid: u32
 }
 
 #[catch(404)]
@@ -131,11 +143,11 @@ fn index() -> &'static str {
 }
 
 /// Retrieve the user's ID, if any.
-#[post("/login", data = "<input>")]
+#[post("/login", format = "application/x-www-form-urlencoded", data = "<input>")]
 fn login(input: Form<LogIn>) -> Json<OkResponse> {
     if let Ok(username) = input.username {
         // result = login(input);
-        cookies.add_private(Cookie::new("user_token", /*result.token*/));
+        cookies.add_private(Cookie::new("user_token", result.token));
         let ret = OkResponse {
             ok: result.ok,
             message: ""
@@ -151,8 +163,8 @@ fn login(input: Form<LogIn>) -> Json<OkResponse> {
 }
 
 /// Register user.
-#[post("/register", data = "<input>")]
-fn login(input: Form<LogIn>) -> Json<OkResponse> {
+#[post("/register", format = "application/x-www-form-urlencoded", data = "<input>")]
+fn register(input: Form<LogIn>) -> Json<OkResponse> {
     if let Ok(username) = input.username {
         // result = register(input);
         let ret = OkResponse {
@@ -170,15 +182,22 @@ fn login(input: Form<LogIn>) -> Json<OkResponse> {
 
 /// Retrieve the user's profile.
 #[get("/user/<username>")]
+fn showUserProfile(username: String) -> String {
+    //result = controller.getUserProfile(username);
+    JSON(result);
+}
+
+// Retrive other user-information like email and role
+#[get("/user/<username>/private")]
 fn showUserProfile(cookies: Cookies, username: String) -> String {
-    //result = getUserProfile(username);
+    //result = auth.getUserProfile(cookies.get_private("user_token"), username);
     JSON(result);
 }
 
 /// Search.
 #[get("/search/<searchStr>")]
 fn search(cookies: Cookies, searchStr: String) -> String {
-    //result = search(searchStr);
+    //result = controller.search(searchStr);
     JSON(result);
 }
 
@@ -193,26 +212,33 @@ fn logout(mut cookies: Cookies) -> Json<OkResponse> {
     JSON(ret);
 }
 
-/// Get all threads in category.
-#[get("/category/<category>")]
-fn search(cookies: Cookies, category: String) -> String {
-    //let result = getCategory(category);
+/// Get all categories.
+#[get("/category")]
+fn getAllCategories() -> String {
+    //let result = controller.getAllCategories();
     JSON(result);
 }
 
-/// Search.
+/// Get all threads in category.
+#[get("/category/<category>")]
+fn getCategory(category: u32) -> String {
+    //let result = controller.getCategory(category);
+    JSON(result);
+}
+
+/// Get all comments in a thread.
 #[get("/thread/<thread>")]
-fn search(cookies: Cookies, thread: String) -> String {
-    //let result = getThread(thread);
+fn getThread(thread: u32) -> String {
+    //let result = controller.getThread(thread);
     JSON(result);
 }
 
 /// Comment on a thread.
-#[post("/comment", data = "<input>")]
-fn comment(cookies: Cookies, input: Form<NewComment>) -> String {
-    //result = verifyUser(cookies.get_private("user_token"))
-    if result.ok == true {
-        //let ret = comment(input, result.id);
+#[post("/comment/new", format = "application/x-www-form-urlencoded", data = "<input>")]
+fn comment(cookies: Cookies, input: Form<Comment>) -> String {
+    //result = authverifyUser(cookies.get_private("user_token"))
+    if result.ok == true {                                      // If token is correct.
+        //let ret = controller.comment(input, result);
         JSON(ret);
     }
     else {
@@ -225,11 +251,11 @@ fn comment(cookies: Cookies, input: Form<NewComment>) -> String {
 }
 
 /// Make a new thread.
-#[post("/newThread", data = "<input>")]
-fn addThread(cookies: Cookies, input: Form<NewThread>) -> String {
-    //result = verifyUser(cookies.get_private("user_token"))
-    if result.ok == true {
-        //let ret = addThread(input, result.id);
+#[post("/thread/new", format = "application/x-www-form-urlencoded", data = "<input>")]
+fn addThread(cookies: Cookies, input: Form<Thread>) -> String {
+    //result = auth.verifyUser(cookies.get_private("user_token"))
+    if result.ok == true {                                      // If token is correct.
+        //let ret = controller.addThread(input, result);
         JSON(ret);
     }
     else {
@@ -242,11 +268,11 @@ fn addThread(cookies: Cookies, input: Form<NewThread>) -> String {
 }
 
 /// Make a new thread.
-#[post("/newCategory", data = "<input>")]
-fn addCategory(cookies: Cookies, input: Form<NewCategory>) -> String {
-    //result = verifyUser(cookies.get_private("user_token"))
-    if result.ok == true {
-        //let ret = addCategory(input, result.id);
+#[post("/category/new", format = "application/x-www-form-urlencoded", data = "<input>")]
+fn addCategory(cookies: Cookies, input: Form<Category>) -> String {
+    //result = auth.verifyUser(cookies.get_private("user_token"))
+    if result.ok == true {                                      // If token is correct.
+        //let ret = controller.addCategory(input, result);
         JSON(ret);
     }
     else {
@@ -259,12 +285,12 @@ fn addCategory(cookies: Cookies, input: Form<NewCategory>) -> String {
 }
 
 /// Edit user
-#[post("/editUser", data = "<input>")]
+#[post("/user/edit", format = "application/x-www-form-urlencoded", data = "<input>")]
 fn editUser(cookies: Cookies, input: Form<User>) -> JSON<OkResponse> {
-    //result = verifyUser(cookies.get_private("user_token"))
-    if result.ok == true {
-        //let ret1 = auth.editUser(input, result.id);
-        //let ret2 = controller.editUser(input, result.id);
+    //result = auth.verifyUser(cookies.get_private("user_token"))
+    if result.ok == true {                                      // If token is correct.
+        //let ret1 = auth.editUser(input, result);
+        //let ret2 = controller.editUser(input, result);
         let ret = OkResponse {
             ok: false,
             message: "Wrong input"
@@ -284,6 +310,144 @@ fn editUser(cookies: Cookies, input: Form<User>) -> JSON<OkResponse> {
     }
 }
 
+/// Upload a new avatar.
+#[post("/user/avatar/upload", format = "multipart/form-data", data = "<input>")]
+fn uploadAvatar(cookies: Cookies, input: Form<Avatar>) -> JSON<OkResponse> {
+    //result = auth.verifyUser(cookies.get_private("user_token"))
+    if result.ok == true {                                      // If token is correct.
+        //let ret = controller.uploadAvatar(input, result);
+        JSON(ret);
+    }
+    else {
+        let ret = OkResponse {
+            ok: false,
+            message: "Wrong input."
+        }
+        JSON(ret);
+    }
+}
+
+/// Edit category.
+#[post("/category/edit/<cid>", format = "application/x-www-form-urlencoded", data = "<input>")]
+fn editCategory(cookies: Cookies, input: Form<Category>, cid: u32) -> JSON<OkResponse> {
+    //result = auth.verifyUser(cookies.get_private("user_token"))
+    if result.ok == true && result.role == 3 {                     // If token is correct and user is admin.
+        //let ret = controller.editCategory(input, result, cid);
+        JSON(ret);
+    }
+    else {
+        let ret = OkResponse {
+            ok: false,
+            message: "Wrong input."
+        }
+        JSON(ret);
+    }
+}
+
+/// Edit thread.
+#[post("/thread/edit/<tid>", format = "application/x-www-form-urlencoded", data = "<input>")]
+fn editThread(cookies: Cookies, input: Form<Thread>, tid: u32) -> JSON<OkResponse> {
+    //result = auth.verifyUser(cookies.get_private("user_token"))
+    if result.ok == true {                                      // If token is correct.
+        //let ret = controller.editThread(input, result, tid);
+        JSON(ret);
+    }
+    else {
+        let ret = OkResponse {
+            ok: false,
+            message: "Wrong input."
+        }
+        JSON(ret);
+    }
+}
+
+/// Edit comment.
+#[post("/comment/edit/<cid>", format = "application/x-www-form-urlencoded", data = "<input>")]
+fn editComment(cookies: Cookies, input: Form<Comment>, cid: u32) -> JSON<OkResponse> {
+    //result = auth.verifyUser(cookies.get_private("user_token"))
+    if result.ok == true {                                      // If token is correct.
+        //let ret = controller.editComment(input, result, cid);
+        JSON(ret);
+    }
+    else {
+        let ret = OkResponse {
+            ok: false,
+            message: "Wrong input."
+        }
+        JSON(ret);
+    }
+}
+
+/// Hide category.
+#[post("/category/hide/<cid>", format = "application/x-www-form-urlencoded", data = "<input>")]
+fn editCategory(cookies: Cookies, input: Form<Category>, cid: u32) -> JSON<OkResponse> {
+    //result = auth.verifyUser(cookies.get_private("user_token"))
+    if result.ok == true && result.role == 3 {                     // If token is correct and user is admin.
+        //let ret = controller.hideCategory(input, result, cid);
+        JSON(ret);
+    }
+    else {
+        let ret = OkResponse {
+            ok: false,
+            message: "Wrong input."
+        }
+        JSON(ret);
+    }
+}
+
+/// Hide thread.
+#[post("/thread/hide/<tid>", format = "application/x-www-form-urlencoded", data = "<input>")]
+fn hideThread(cookies: Cookies, input: Form<Thread>, tid: u32) -> JSON<OkResponse> {
+    //result = auth.verifyUser(cookies.get_private("user_token"))
+    if result.ok == true {                                      // If token is correct.
+        //let ret = controller.hideThread(input, result, tid);
+        JSON(ret);
+    }
+    else {
+        let ret = OkResponse {
+            ok: false,
+            message: "Wrong input."
+        }
+        JSON(ret);
+    }
+}
+
+/// Hide comment.
+#[post("/comment/hide/<cid>", format = "application/x-www-form-urlencoded", data = "<input>")]
+fn hideComment(cookies: Cookies, input: Form<Comment>, cid: u32) -> JSON<OkResponse> {
+    //result = auth.verifyUser(cookies.get_private("user_token"))
+    if result.ok == true {                                      // If token is correct.
+        //let ret = controller.hideComment(input, result, cid);
+        JSON(ret);
+    }
+    else {
+        let ret = OkResponse {
+            ok: false,
+            message: "Wrong input."
+        }
+        JSON(ret);
+    }
+}
+
+/// Administer usergroups.
+#[post("/admin/edit/usergroups", format = "application/x-www-form-urlencoded", data = "<input>")]
+fn editCategory(cookies: Cookies, input: Form<AdminUsergroups>, cid: u32) -> JSON<OkResponse> {
+    //result = auth.verifyUser(cookies.get_private("user_token"))
+    if result.ok == true && result.role == 3 {                     // If token is correct and user is admin.
+        //let ret = auth.administerUsergroups(input, result);
+        JSON(ret);
+    }
+    else {
+        let ret = OkResponse {
+            ok: false,
+            message: "Wrong input."
+        }
+        JSON(ret);
+    }
+}
+
 fn main() {
-    rocket::ignite().mount("/", routes![index]).launch();
+    rocket::ignite().mount("/", routes![index, login, register, showUserProfile, search, logout, 
+        getAllCategories, getCategory, getThread, comment, addCategory, addThread, editUser, uploadAvatar,
+        editCategory, editThread, editComment]).launch();
 }
