@@ -118,6 +118,7 @@ struct User {
     password: Result<Password, &'vRawStr>,
     email: String,
     description: String,
+    role: String,
     uid: u32
 }
 
@@ -147,7 +148,7 @@ fn index(remote_addr: SocketAddr) -> &'static str {
     "Hello, world!"
 }
 
-/// Retrieve the user's ID, if any.
+/*/// Retrieve the user's ID, if any.
 #[post("/login", format = "application/x-www-form-urlencoded", data = "<input>")]
 fn login(input: Form<LogIn>, remote_addr: SocketAddr) -> Json<OkResponse> {
     if let Ok(username) = input.username {
@@ -493,10 +494,10 @@ fn adminUsergroups(cookies: Cookies, input: Form<AdminUsergroups>, remote_addr: 
         log(format!("Verify-request rejected"), remote_addr);                  // Log action.
         JSON(ret);
     }
-}
+}*/
 
 fn main() {
-    rocket::ignite().mount("/", routes![index, login, register, showUserProfile, search, logout, 
+    rocket::ignite().mount("/", routes![index/*, login, register, showUserProfile, search, logout, 
         getAllCategories, getCategory, getThread, comment, addCategory, addThread, editUser, uploadAvatar,
-        editCategory, editThread, editComment, hideCategory, hideThread, hideComment, adminUsergroups]).launch();
+        editCategory, editThread, editComment, hideCategory, hideThread, hideComment, adminUsergroups*/]).launch();
 }
