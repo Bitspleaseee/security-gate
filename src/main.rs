@@ -129,12 +129,12 @@ struct Avatar {
 }
 
 /*#[catch(404)]
-fn not_found(req: &Request) -> String { 
+fn not_found(req: &Request) -> String {
     "The website was not found".toString()
 }
 
 #[catch(400)]
-fn not_found(req: &Request) -> String { 
+fn not_found(req: &Request) -> String {
     "We encontered an error when processing your request".toString()
 }*/
 
