@@ -1,6 +1,10 @@
 #![feature(plugin)]
 #![feature(try_from)]
 #![plugin(rocket_codegen)]
+// These clippy lints are unreasonable, hence they are disabled
+#![feature(tool_lints)]
+#![allow(clippy::suspicious_else_formatting)]
+#![allow(clippy::needless_pass_by_value)]
 
 #[macro_use]
 extern crate lazy_static;
