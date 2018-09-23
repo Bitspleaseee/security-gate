@@ -1,3 +1,4 @@
+use crate::auth::api::authenticate;
 use crate::auth::forms::{LoginForm, LoginFormError, LoginFormSuccess};
 use rocket::http::{Cookie, Cookies};
 use rocket::request::Form;
@@ -27,15 +28,14 @@ pub fn login<'a>(
         .password()
         .ok_or_else(|| Json(InvalidPassword))?;
 
-    //authenticate(username, password)
-    //    .ok_or_else(|| Json(InvalidPassword))
-    //    .map(|token| {
-    //        cookies.add_private(Cookie::new("user_token", token.into_inner()));
-    //        trace!("added cookie: 'user_token'");
-    //        info!("user '{}' logged in successfully", username);
-    //        Json(Authenticated)
-    //    })
-    Ok(Json(Authenticated))
+    authenticate(username, password)
+        .ok_or_else(|| Json(InvalidPassword))
+        .map(|token| {
+            cookies.add_private(Cookie::new("user_token", token.into_inner()));
+            trace!("added cookie: 'user_token'");
+            info!("user '{}' logged in successfully", username);
+            Json(Authenticated)
+        })
 }
 
 /*
