@@ -1,8 +1,9 @@
-use crate::auth::forms::{LoginForm, LoginFormError};
+use crate::auth::forms::{LoginForm, LoginFormError, LoginFormSuccess};
 use rocket::http::{Cookie, Cookies};
 use rocket::request::Form;
-use rocket::response::Redirect;
 use rocket_contrib::Json;
+
+type JsonResult<T, E> = Result<Json<T>, Json<E>>;
 
 /// Authenticate user and return a special session cookie for the current session
 #[post(
@@ -10,25 +11,31 @@ use rocket_contrib::Json;
     format = "application/x-www-form-urlencoded",
     data = "<login_form>"
 )]
-pub fn login<'v>(
+pub fn login<'a>(
     mut cookies: Cookies,
-    login_form: Form<'v, LoginForm<'v>>,
-) -> Result<Redirect, Json<LoginFormError>> {
-    let login_form = login_form.get();
+    login_form: Form<'a, LoginForm<'a>>,
+) -> JsonResult<LoginFormSuccess, LoginFormError> {
+    use crate::auth::forms::{LoginFormError::*, LoginFormSuccess::*};
 
     let username = login_form
+        .get()
         .username()
-        .ok_or(Json(LoginFormError::InvalidUsername))?;
-
-    let _password = login_form
-        .password()
-        .ok_or(Json(LoginFormError::InvalidPassword))?;
-
+        .ok_or_else(|| Json(InvalidUsername))?;
     info!("login request from '{}'", username);
-    // result = login(username, password);
-    cookies.add_private(Cookie::new("user_token", "placeholder"));
-    info!("user '{}' logged in successfully", username);
-    Ok(Redirect::to("/"))
+    let password = login_form
+        .get()
+        .password()
+        .ok_or_else(|| Json(InvalidPassword))?;
+
+    //authenticate(username, password)
+    //    .ok_or_else(|| Json(InvalidPassword))
+    //    .map(|token| {
+    //        cookies.add_private(Cookie::new("user_token", token.into_inner()));
+    //        trace!("added cookie: 'user_token'");
+    //        info!("user '{}' logged in successfully", username);
+    //        Json(Authenticated)
+    //    })
+    Ok(Json(Authenticated))
 }
 
 /*
