@@ -1,0 +1,3 @@
+# Limits the maximum form size to 512KiB
+[global.limits]
+forms = 524288
