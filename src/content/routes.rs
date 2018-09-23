@@ -1,3 +1,7 @@
+#[get("/")]
+fn index() -> &'static str {
+    "Homepage"
+}
 
 /*
 /// Search.

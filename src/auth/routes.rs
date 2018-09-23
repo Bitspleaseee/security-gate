@@ -1,26 +1,37 @@
+use crate::auth::forms::{LoginForm, LoginFormError};
+use rocket::http::{Cookie, Cookies};
+use rocket::request::Form;
+use rocket::response::Redirect;
+use rocket_contrib::Json;
 
-/*/// Retrieve the user's ID, if any.
-#[post("/login", format = "application/x-www-form-urlencoded", data = "<input>")]
-fn login(input: Form<LogIn>, remote_addr: SocketAddr) -> Json<OkResponse> {
-    if let Ok(username) = input.username {
-        // result = login(input);
-        cookies.add_private(Cookie::new("user_token", result.token));
-        let ret = OkResponse {
-            ok: result.ok,
-            message: ""
-        };
-        info!("{}: logged in as user: {}", remote_addr, input.username);
-        Json(ret);
-    } else {
-        let ret = OkResponse {
-            ok: false,
-            message: ""
-        }
-        info!("{}: tried to log in as user: {}", remote_addr, input.username);
-        JSON(ret);
-  }
+/// Authenticate user and return a special session cookie for the current session
+#[post(
+    "/login",
+    format = "application/x-www-form-urlencoded",
+    data = "<login_form>"
+)]
+pub fn login<'v>(
+    mut cookies: Cookies,
+    login_form: Form<'v, LoginForm<'v>>,
+) -> Result<Redirect, Json<LoginFormError>> {
+    let login_form = login_form.get();
+
+    let username = login_form
+        .username()
+        .ok_or(Json(LoginFormError::InvalidUsername))?;
+
+    let _password = login_form
+        .password()
+        .ok_or(Json(LoginFormError::InvalidPassword))?;
+
+    info!("login request from '{}'", username);
+    // result = login(username, password);
+    cookies.add_private(Cookie::new("user_token", "placeholder"));
+    info!("user '{}' logged in successfully", username);
+    Ok(Redirect::to("/"))
 }
 
+/*
 /// Register user.
 #[post("/register", format = "application/x-www-form-urlencoded", data = "<input>")]
 fn register(input: Form<LogIn>, remote_addr: SocketAddr) -> Json<OkResponse> {
@@ -131,3 +142,4 @@ fn adminUsergroups(cookies: Cookies, input: Form<AdminUsergroups>, remote_addr: 
         info!("{}: verify-request rejected", remote_addr);
         JSON(ret);
     }
+*/

@@ -10,14 +10,21 @@
 extern crate lazy_static;
 extern crate regex;
 extern crate rocket;
+extern crate rocket_contrib;
 #[macro_use]
 extern crate log;
 extern crate failure;
 #[macro_use]
 extern crate failure_derive;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+
+mod auth;
+mod content;
 
 fn main() {
     rocket::ignite()
-        .mount("/", routes![])
+        .mount("/", routes![auth::routes::login, content::routes::index])
         .launch();
 }
