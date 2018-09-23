@@ -6,6 +6,11 @@
 extern crate lazy_static;
 extern crate regex;
 extern crate rocket;
+#[macro_use]
+extern crate log;
+extern crate failure;
+#[macro_use]
+extern crate failure_derive;
 
 use std::convert::{TryFrom, TryInto};
 use rocket::http::{Cookies, RawStr};
@@ -128,23 +133,16 @@ struct Avatar {
     uid: u32
 }
 
-/*#[catch(404)]
-fn not_found(req: &Request) -> String {
-    "The website was not found".toString()
-}
-
+/*
 #[catch(400)]
-fn not_found(req: &Request) -> String {
+fn not_found(req: &Request, remote_addr: SocketAddr) -> String {
+   // info!("{}: requested invalid URI {}", remote_addr, req.uri());
     "We encontered an error when processing your request".toString()
-}*/
-
-/*fn log(message: String, remote_addr: String) {
-    format!("Remote Address: {:?}", remote_addr)
 }*/
 
 #[get("/")]
 fn index(/*remote_addr: SocketAddr*/) -> &'static str {
-   // log("Retriving webpage", remote_addr);                  // Log action.
+   // info!("{}: retriving webpage", remote_addr);
     "Hello, world!"
 }
 
@@ -158,14 +156,14 @@ fn login(input: Form<LogIn>, remote_addr: SocketAddr) -> Json<OkResponse> {
             ok: result.ok,
             message: ""
         };
-        log(format!("Logged in as user: {}", input.username), remote_addr);                  // Log action.
+        info!("{}: logged in as user: {}", remote_addr, input.username);
         Json(ret);
     } else {
         let ret = OkResponse {
             ok: false,
             message: ""
         }
-        log(format!("Tried to log in as user: {}", input.username), remote_addr);                  // Log action.
+        info!("{}: tried to log in as user: {}", remote_addr, input.username);
         JSON(ret);
   }
 }
@@ -175,14 +173,14 @@ fn login(input: Form<LogIn>, remote_addr: SocketAddr) -> Json<OkResponse> {
 fn register(input: Form<LogIn>, remote_addr: SocketAddr) -> Json<OkResponse> {
     if let Ok(username) = input.username {
         // result = register(input);
-        log(format!("Sent request to register new user with username: {}", input.username), remote_addr);                  // Log action.
+        info!("{}: sent request to register new user with username: {}", remote_addr, input.username);
         Json(result);
     } else {
         let ret = OkResponse {
             ok: false,,
             message: ""
         }
-        log(format!("Failed regestering new user with username: {}", input.username), remote_addr);                  // Log action.
+        info!("{}: failed regestering new user with username: {}", remote_addr, input.username);
         JSON(ret);
   }
 }
@@ -191,7 +189,7 @@ fn register(input: Form<LogIn>, remote_addr: SocketAddr) -> Json<OkResponse> {
 #[get("/user/<username>")]
 fn showUserProfile(username: Username, remote_addr: SocketAddr) -> String {
     //result = controller.getUserProfile(username);
-    log(format!("Sent request to controller about public profile of user with username: {}", input.username), remote_addr);                  // Log action.
+    info!("{}: sent request to controller about public profile of user with username: {}", remote_addr, input.username);
     JSON(result);
 }
 
@@ -199,7 +197,7 @@ fn showUserProfile(username: Username, remote_addr: SocketAddr) -> String {
 #[get("/user/<username>/private")]
 fn showUserProfile(cookies: Cookies, username: Username, remote_addr: SocketAddr) -> String {
     //result = auth.getUserProfile(cookies.get_private("user_token"), username);
-    log(format!("Sent request to controller about private profile of user with username: {}", input.username), remote_addr);                  // Log action.
+    info!("{}: sent request to controller about private profile of user with username: {}", remote_addr, input.username);
     JSON(result);
 }
 
@@ -207,7 +205,7 @@ fn showUserProfile(cookies: Cookies, username: Username, remote_addr: SocketAddr
 #[get("/search/<searchStr>")]
 fn search(searchStr: String, remote_addr: SocketAddr) -> String {
     //result = controller.search(searchStr);
-    log(format!("Sent search request to controller. Search-String: {}", searchString), remote_addr);                  // Log action.
+    info!("{}: sent search request to controller. search-string: {}", remote_addr, searchstring);
     JSON(result);
 }
 
@@ -219,7 +217,7 @@ fn logout(mut cookies: Cookies, remote_addr: SocketAddr) -> Json<OkResponse> {
     let ret = OkResponse {
         ok: true
     };
-    log(format!("Lgged out: Took away cookie and told auth-module"), remote_addr);                  // Log action.
+    info!("{}: lgged out: took away cookie and told auth-module", remote_addr);
     JSON(ret);
 }
 
@@ -227,7 +225,7 @@ fn logout(mut cookies: Cookies, remote_addr: SocketAddr) -> Json<OkResponse> {
 #[get("/category")]
 fn getAllCategories(remote_addr: SocketAddr) -> String {
     //let result = controller.getAllCategories();
-    log(format!("Sent request of getting list of all categories to controller"), remote_addr);                  // Log action.
+    info!("{}: sent request of getting list of all categories to controller", remote_addr);
     JSON(result);
 }
 
@@ -235,7 +233,7 @@ fn getAllCategories(remote_addr: SocketAddr) -> String {
 #[get("/category/<category>")]
 fn getCategory(category: u32, remote_addr: SocketAddr) -> String {
     //let result = controller.getCategory(category);
-    log(format!("Sent request of getting category with id {} to controller", category), remote_addr);                  // Log action.
+    info!("{}: sent request of getting category with id {} to controller", remote_addr, category);
     JSON(result);
 }
 
@@ -243,7 +241,7 @@ fn getCategory(category: u32, remote_addr: SocketAddr) -> String {
 #[get("/thread/<thread>")]
 fn getThread(thread: u32, remote_addr: SocketAddr) -> String {
     //let result = controller.getThread(thread);
-    log(format!("Sent request of getting thread with id {} to controller", thread), remote_addr);                  // Log action.
+    info!("{}: sent request of getting thread with id {} to controller", remote_addr, thread);
     JSON(result);
 }
 
@@ -251,10 +249,10 @@ fn getThread(thread: u32, remote_addr: SocketAddr) -> String {
 #[post("/comment/new", format = "application/x-www-form-urlencoded", data = "<input>")]
 fn comment(cookies: Cookies, input: Form<Comment>, remote_addr: SocketAddr) -> String {
     //result = authverifyUser(cookies.get_private("user_token"))
-    log(format!("Sent request to verify user to auth-module"), remote_addr);                  // Log action.
+    info!("{}: sent request to verify user to auth-module", remote_addr);
     if result.ok == true {                                      // If token is correct.
         //let ret = controller.comment(input, result);
-        log(format!("Sent request to let user {} comment thread {} to controller", result.username, input.thread), remote_addr);                  // Log action.
+        info!("{}: sent request to let user {} comment thread {} to controller", remote_addr, result.username, input.thread);
         JSON(ret);
     }
     else {
@@ -262,7 +260,7 @@ fn comment(cookies: Cookies, input: Form<Comment>, remote_addr: SocketAddr) -> S
             ok: false,
             message: "Wrong input."
         }
-        log(format!("Verify-request rejected"), remote_addr);                  // Log action.
+        info!("{}: verify-request rejected", remote_addr);
         JSON(ret);
     }
 }
@@ -271,10 +269,10 @@ fn comment(cookies: Cookies, input: Form<Comment>, remote_addr: SocketAddr) -> S
 #[post("/thread/new", format = "application/x-www-form-urlencoded", data = "<input>")]
 fn addThread(cookies: Cookies, input: Form<Thread>, remote_addr: SocketAddr) -> String {
     //result = auth.verifyUser(cookies.get_private("user_token"))
-    log(format!("Sent request to verify user to auth-module"), remote_addr);                  // Log action.
+    info!("{}: sent request to verify user to auth-module", remote_addr);
     if result.ok == true {                                      // If token is correct.
         //let ret = controller.addThread(input, result);
-        log(format!("Sent request to add new thread. Will be added by user {}", result.username), remote_addr);                  // Log action.
+        info!("{}: sent request to add new thread. will be added by user {}", remote_addr, result.username);
         JSON(ret);
     }
     else {
@@ -282,7 +280,7 @@ fn addThread(cookies: Cookies, input: Form<Thread>, remote_addr: SocketAddr) -> 
             ok: false,
             message: "Wrong input."
         }
-        log(format!("Verify-request rejected"), remote_addr);                  // Log action.
+        info!("{}: verify-request rejected", remote_addr);
         JSON(ret);
     }
 }
@@ -291,10 +289,10 @@ fn addThread(cookies: Cookies, input: Form<Thread>, remote_addr: SocketAddr) -> 
 #[post("/category/new", format = "application/x-www-form-urlencoded", data = "<input>")]
 fn addCategory(cookies: Cookies, input: Form<Category>, remote_addr: SocketAddr) -> String {
     //result = auth.verifyUser(cookies.get_private("user_token"));
-    log(format!("Sent request to verify user to auth-module"), remote_addr);                  // Log action.
+    info!("{}: sent request to verify user to auth-module", remote_addr);
     if result.ok == true && result.role > 1 {                                      // If token is correct and role is moderator or above.
         //let ret = controller.addCategory(input, result);
-        log(format!("Sent request to add new thread. Will be added by user {}", result.username), remote_addr);                  // Log action.
+        info!("{}: sent request to add new thread. will be added by user {}", remote_addr, result.username);
         JSON(ret);
     }
     else {
@@ -302,7 +300,7 @@ fn addCategory(cookies: Cookies, input: Form<Category>, remote_addr: SocketAddr)
             ok: false,
             message: "Wrong input."
         }
-        log(format!("Verify-request rejected"), remote_addr);                  // Log action.
+        info!("{}: verify-request rejected", remote_addr);
         JSON(ret);
     }
 }
@@ -311,7 +309,7 @@ fn addCategory(cookies: Cookies, input: Form<Category>, remote_addr: SocketAddr)
 #[post("/user/edit", format = "application/x-www-form-urlencoded", data = "<input>")]
 fn editUser(cookies: Cookies, input: Form<User>, remote_addr: SocketAddr) -> JSON<OkResponse> {
     //result = auth.verifyUser(cookies.get_private("user_token"));
-    log(format!("Sent request to verify user to auth-module"), remote_addr);                  // Log action.
+    info!("{}: sent request to verify user to auth-module", remote_addr);
     if result.ok == true {                                      // If token is correct.
         //let ret1 = auth.editUser(input, result);
         //let ret2 = controller.editUser(input, result);
@@ -323,7 +321,7 @@ fn editUser(cookies: Cookies, input: Form<User>, remote_addr: SocketAddr) -> JSO
             ret.ok = true;
             ret.message = "";
         }
-        log(format!("Sent request to edit user to controller. Editing will be done by user {} on user {}", result.username, input.username), remote_addr);                  // Log action.
+        info!("{}: sent request to edit user to controller. editing will be done by user {} on user {}", remote_addr, result.username, input.username);
         JSON(ret);
     }
     else {
@@ -331,7 +329,7 @@ fn editUser(cookies: Cookies, input: Form<User>, remote_addr: SocketAddr) -> JSO
             ok: false,
             message: "Wrong input."
         }
-        log(format!("Verify-request rejected"), remote_addr);                  // Log action.
+        info!("{}: verify-request rejected", remote_addr);
         JSON(ret);
     }
 }
@@ -340,10 +338,10 @@ fn editUser(cookies: Cookies, input: Form<User>, remote_addr: SocketAddr) -> JSO
 #[post("/user/avatar/upload", format = "multipart/form-data", data = "<input>")]
 fn uploadAvatar(cookies: Cookies, input: Form<Avatar>, remote_addr: SocketAddr) -> JSON<OkResponse> {
     //result = auth.verifyUser(cookies.get_private("user_token"));
-    log(format!("Sent request to verify user to auth-module"), remote_addr);                  // Log action.
+    info!("{}: sent request to verify user to auth-module", remote_addr);
     if result.ok == true {                                      // If token is correct.
         //let ret = controller.uploadAvatar(input, result);
-        log(format!("Sent request to upload avatar for user with id {} by user ", input.uid, result.username), remote_addr);                  // Log action.
+        info!("{}: sent request to upload avatar for user with id {} by user ", remote_addr, input.uid, result.username);
         JSON(ret);
     }
     else {
@@ -351,7 +349,7 @@ fn uploadAvatar(cookies: Cookies, input: Form<Avatar>, remote_addr: SocketAddr) 
             ok: false,
             message: "Wrong input."
         }
-        log(format!("Verify-request rejected"), remote_addr);                  // Log action.
+        info!("{}: verify-request rejected", remote_addr);
         JSON(ret);
     }
 }
@@ -360,10 +358,10 @@ fn uploadAvatar(cookies: Cookies, input: Form<Avatar>, remote_addr: SocketAddr) 
 #[post("/category/edit/<cid>", format = "application/x-www-form-urlencoded", data = "<input>")]
 fn editCategory(cookies: Cookies, input: Form<Category>, cid: u32, remote_addr: SocketAddr) -> JSON<OkResponse> {
     //result = auth.verifyUser(cookies.get_private("user_token"));
-    log(format!("Sent request to verify user to auth-module"), remote_addr);                  // Log action.
+    info!("{}: sent request to verify user to auth-module", remote_addr);
     if result.ok == true && result.role == 3 {                     // If token is correct and user is admin.
         //let ret = controller.editCategory(input, result, cid);
-        log(format!("Sent request to edit category with id {}, for user {} to controller", cid, result.username), remote_addr);                  // Log action.
+        info!("{}: sent request to edit category with id {}, for user {} to controller", remote_addr, cid, result.username);
         JSON(ret);
     }
     else {
@@ -371,7 +369,7 @@ fn editCategory(cookies: Cookies, input: Form<Category>, cid: u32, remote_addr: 
             ok: false,
             message: "Wrong input."
         }
-        log(format!("Verify-request rejected"), remote_addr);                  // Log action.
+        info!("{}: verify-request rejected", remote_addr);
         JSON(ret);
     }
 }
@@ -380,10 +378,10 @@ fn editCategory(cookies: Cookies, input: Form<Category>, cid: u32, remote_addr: 
 #[post("/thread/edit/<tid>", format = "application/x-www-form-urlencoded", data = "<input>")]
 fn editThread(cookies: Cookies, input: Form<Thread>, tid: u32, remote_addr: SocketAddr) -> JSON<OkResponse> {
     //result = auth.verifyUser(cookies.get_private("user_token"));
-    log(format!("Sent request to verify user to auth-module"), remote_addr);                  // Log action.
+    info!("{}: sent request to verify user to auth-module", remote_addr);
     if result.ok == true {                                      // If token is correct.
         //let ret = controller.editThread(input, result, tid);
-        log(format!("Sent request to edit thread with id {}, for user {} to controller", tid, result.username), remote_addr);                  // Log action.
+        info!("{}: sent request to edit thread with id {}, for user {} to controller", remote_addr, tid, result.username);
         JSON(ret);
     }
     else {
@@ -391,7 +389,7 @@ fn editThread(cookies: Cookies, input: Form<Thread>, tid: u32, remote_addr: Sock
             ok: false,
             message: "Wrong input."
         }
-        log(format!("Verify-request rejected"), remote_addr);                  // Log action.
+        info!("{}: verify-request rejected", remote_addr);
         JSON(ret);
     }
 }
@@ -400,10 +398,10 @@ fn editThread(cookies: Cookies, input: Form<Thread>, tid: u32, remote_addr: Sock
 #[post("/comment/edit/<cid>", format = "application/x-www-form-urlencoded", data = "<input>")]
 fn editComment(cookies: Cookies, input: Form<Comment>, cid: u32, remote_addr: SocketAddr) -> JSON<OkResponse> {
     //result = auth.verifyUser(cookies.get_private("user_token"));
-    log(format!("Sent request to verify user to auth-module"), remote_addr);                  // Log action.
+    info!("{}: sent request to verify user to auth-module", remote_addr);
     if result.ok == true {                                      // If token is correct.
         //let ret = controller.editComment(input, result, cid);
-        log(format!("Sent request to edit comment with id {}, for user {} to controller", cid, result.username), remote_addr);                  // Log action.
+        info!("{}: sent request to edit comment with id {}, for user {} to controller", remote_addr, cid, result.username);
         JSON(ret);
     }
     else {
@@ -411,7 +409,7 @@ fn editComment(cookies: Cookies, input: Form<Comment>, cid: u32, remote_addr: So
             ok: false,
             message: "Wrong input."
         }
-        log(format!("Verify-request rejected"), remote_addr);                  // Log action.
+        info!("{}: verify-request rejected", remote_addr);
         JSON(ret);
     }
 }
@@ -420,10 +418,10 @@ fn editComment(cookies: Cookies, input: Form<Comment>, cid: u32, remote_addr: So
 #[post("/category/hide/<cid>", format = "application/x-www-form-urlencoded", data = "<input>")]
 fn hideCategory(cookies: Cookies, input: Form<Category>, cid: u32, remote_addr: SocketAddr) -> JSON<OkResponse> {
     //result = auth.verifyUser(cookies.get_private("user_token"));
-    log(format!("Sent request to verify user to auth-module"), remote_addr);                  // Log action.
+    info!("{}: sent request to verify user to auth-module", remote_addr);
     if result.ok == true && result.role == 3 {                     // If token is correct and user is admin.
         //let ret = controller.hideCategory(input, result, cid);
-        log(format!("Sent request to hide category with id {}, for user {} to controller", cid, result.username), remote_addr);                  // Log action.
+        info!("{}: sent request to hide category with id {}, for user {} to controller", remote_addr, cid, result.username);
         JSON(ret);
     }
     else {
@@ -431,7 +429,7 @@ fn hideCategory(cookies: Cookies, input: Form<Category>, cid: u32, remote_addr: 
             ok: false,
             message: "Wrong input."
         }
-        log(format!("Verify-request rejected"), remote_addr);                  // Log action.
+        info!("{}: verify-request rejected", remote_addr);
         JSON(ret);
     }
 }
@@ -440,10 +438,10 @@ fn hideCategory(cookies: Cookies, input: Form<Category>, cid: u32, remote_addr: 
 #[post("/thread/hide/<tid>", format = "application/x-www-form-urlencoded", data = "<input>")]
 fn hideThread(cookies: Cookies, input: Form<Thread>, tid: u32, remote_addr: SocketAddr) -> JSON<OkResponse> {
     //result = auth.verifyUser(cookies.get_private("user_token"));
-    log(format!("Sent request to verify user to auth-module"), remote_addr);                  // Log action.
+    info!("{}: sent request to verify user to auth-module", remote_addr);
     if result.ok == true {                                      // If token is correct.
         //let ret = controller.hideThread(input, result, tid);
-        log(format!("Sent request to hide thread with id {}, for user {} to controller", tid, result.username), remote_addr);                  // Log action.
+        info!("{}: sent request to hide thread with id {}, for user {} to controller", remote_addr, tid, result.username);
         JSON(ret);
     }
     else {
@@ -451,7 +449,7 @@ fn hideThread(cookies: Cookies, input: Form<Thread>, tid: u32, remote_addr: Sock
             ok: false,
             message: "Wrong input."
         }
-        log(format!("Verify-request rejected"), remote_addr);                  // Log action.
+        info!("{}: verify-request rejected", remote_addr);
         JSON(ret);
     }
 }
@@ -460,10 +458,10 @@ fn hideThread(cookies: Cookies, input: Form<Thread>, tid: u32, remote_addr: Sock
 #[post("/comment/hide/<cid>", format = "application/x-www-form-urlencoded", data = "<input>")]
 fn hideComment(cookies: Cookies, input: Form<Comment>, cid: u32, remote_addr: SocketAddr) -> JSON<OkResponse> {
     //result = auth.verifyUser(cookies.get_private("user_token"));
-    log(format!("Sent request to verify user to auth-module"), remote_addr);                  // Log action.
+    info!("{}: sent request to verify user to auth-module", remote_addr);
     if result.ok == true {                                      // If token is correct.
         //let ret = controller.hideComment(input, result, cid);
-        log(format!("Sent request to hide comment with id {}, for user {} to controller", cid, result.username), remote_addr);                  // Log action.
+        info!("{}: sent request to hide comment with id {}, for user {} to controller", remote_addr, cid, result.username);
         JSON(ret);
     }
     else {
@@ -471,7 +469,7 @@ fn hideComment(cookies: Cookies, input: Form<Comment>, cid: u32, remote_addr: So
             ok: false,
             message: "Wrong input."
         }
-        log(format!("Verify-request rejected"), remote_addr);                  // Log action.
+        info!("{}: verify-request rejected", remote_addr);
         JSON(ret);
     }
 }
@@ -480,10 +478,10 @@ fn hideComment(cookies: Cookies, input: Form<Comment>, cid: u32, remote_addr: So
 #[post("/admin/edit/usergroups", format = "application/x-www-form-urlencoded", data = "<input>")]
 fn adminUsergroups(cookies: Cookies, input: Form<AdminUsergroups>, remote_addr: SocketAddr) -> JSON<OkResponse> {
     //result = auth.verifyUser(cookies.get_private("user_token"));
-    log(format!("Sent request to verify user to auth-module"), remote_addr);                  // Log action.
+    info!("{}: sent request to verify user to auth-module", remote_addr);
     if result.ok == true && result.role == 3 {                     // If token is correct and user is admin.
         //let ret = auth.administerUsergroups(input, result);
-        log(format!("Sent request to auth-module to administer usergroups for user {}", result.username), remote_addr);                  // Log action.
+        info!("{}: sent request to auth-module to administer usergroups for user {}", remote_addr, result.username);
         JSON(ret);
     }
     else {
@@ -491,7 +489,7 @@ fn adminUsergroups(cookies: Cookies, input: Form<AdminUsergroups>, remote_addr: 
             ok: false,
             message: "Wrong input."
         }
-        log(format!("Verify-request rejected"), remote_addr);                  // Log action.
+        info!("{}: verify-request rejected", remote_addr);
         JSON(ret);
     }
 }*/
