@@ -39,36 +39,43 @@ pub struct SearchResult<'a> {
 trait Id {}
 
 macro_rules! impl_from_str {
-    ($id:ty, $from_ty:ty) => {
-        impl<'a> FromStr<'a> for $id {
-            type Err = <$id as FromStr>::Err;
-            fn from_str(s: &'a str) -> Result<Self, Self::Err> {
-                s.parse::<$from_ty>().map($id)
+    ($ty:ty, $exp:expr, $from_ty:ty) => {
+        impl FromStr for $ty {
+            type Err = <$from_ty as FromStr>::Err;
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                s.parse::<$from_ty>().map($exp)
             }
         }
-    };
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub struct CategoryId(u32);
-impl_from_str!(CategoryId, u32);
+impl_from_str!(CategoryId, CategoryId, u32);
 impl Id for CategoryId {}
 
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub struct ThreadId(u32);
-impl_from_str!(ThreadId, u32);
+impl_from_str!(ThreadId, ThreadId, u32);
 impl Id for ThreadId {}
 
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub struct CommentId(u32);
-impl_from_str!(CommentId, u32);
+impl_from_str!(CommentId, CommentId, u32);
 impl Id for CommentId {}
 
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub struct UserId(u32);
-impl_from_str!(UserId, u32);
+impl_from_str!(UserId, UserId, u32);
 impl Id for UserId {}
 
+impl<'a, I: Id + FromStr> FromParam<'a> for I {
+    type Error = GetError;
+    fn from_param(param: &'a RawStr) ->Result<Self, Self::Error> {
+        let s: &'a str = param.as_ref();
+        s.parse().map_err(|_| GetError::InvalidId)
+    }
+}
 
 
 /// Optional wrapper for any type which implements Id
@@ -82,7 +89,7 @@ impl<'v, I: Id + FromStr> TryFrom<&'v str> for OptId<I> {
         if s.is_empty() {
             return Ok(OptId(None)); // string = ""
         }
-        
+
         s.parse().map(|id| OptId(Some(id)))
     }
 }
@@ -98,6 +105,7 @@ impl<I: Id> Deref for OptId<I> {
 impl<'a, I: Id + FromStr> FromParam<'a> for OptId<I> {
     type Error = GetError;
     fn from_param(param: &'a RawStr) ->Result<Self, Self::Error> {
-        param.as_ref().try_into().map_err(|_| GetError::InvalidId)
+        let s: &'a str = param.as_ref();
+        s.try_into().map_err(|_| GetError::InvalidId)
     }
 }

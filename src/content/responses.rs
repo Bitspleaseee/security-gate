@@ -3,23 +3,27 @@ use super::data::Thread;
 use super::data::Comment;
 use super::data::SearchResult;
 
+#[derive(Serialize, Deserialize, Debug)]
 pub enum SearchSuccess<'a> {
-    Results(Vec<SearchResult<'a>>),
+    Results(#[serde(borrow)]Vec<SearchResult<'a>>),
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub enum CategorySuccess<'a> {
-    MultipleCategories(Vec<Category<'a>>),
-    SingleCategory(Category<'a>),
+    MultipleCategories(#[serde(borrow)]Vec<Category<'a>>),
+    SingleCategory(#[serde(borrow)]Category<'a>),
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub enum ThreadSuccess<'a> {
-    MultipleThreads(Vec<Thread<'a>>),
-    SingleThread(Thread<'a>),
+    MultipleThreads(#[serde(borrow)]Vec<Thread<'a>>),
+    SingleThread(#[serde(borrow)]Thread<'a>),
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub enum CommentSuccess<'a> {
-    MultipleComments(Vec<Thread<'a>>),
-    SingleThread(Thread<'a>),
+    MultipleComments(#[serde(borrow)]Vec<Thread<'a>>),
+    SingleThread(#[serde(borrow)]Thread<'a>),
 }
 
 #[derive(Fail, Serialize, Deserialize, Debug)]
