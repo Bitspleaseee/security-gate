@@ -1,3 +1,4 @@
 pub mod api;
-pub mod forms;
+pub mod requests;
+pub mod responses;
 pub mod routes;

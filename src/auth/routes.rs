@@ -1,41 +1,87 @@
-use crate::auth::api::authenticate;
-use crate::auth::forms::{LoginForm, LoginFormError, LoginFormSuccess};
-use rocket::http::{Cookie, Cookies};
-use rocket::request::Form;
+use crate::auth::api::{authenticate, deauthenticate, USER_TOKEN_NAME};
+use crate::auth::requests::{AuthPayload, AuthRequest};
+use crate::auth::responses::{AuthError, AuthSuccess};
+use crate::JsonResult;
+use rocket::http::Cookies;
 use rocket_contrib::Json;
+use std::convert::TryInto;
 
-type JsonResult<T, E> = Result<Json<T>, Json<E>>;
+/// Authenticate or deauthenticate user
+///
+/// Uses a strict JSON format to conway actions.
+///
+/// # Request objects
+///
+/// ## Authentication request
+///
+/// A request to authenticate with the system. Returns a special session cookie which will be used
+/// for authorization.
+///
+/// ```json
+/// {
+///     "type": "AUTHENTICATE",
+///     "payload": {
+///         "username": "my_username",
+///         "password": "secret"
+///     }
+/// }
+/// ```
+///
+/// ## Deauthentication request
+///
+/// A request to deauthenticate with the service. Will remove the session cookie.
+///
+/// ```json
+/// {
+///     "type": "DEAUTHENTICATE",
+///     "payload": {}
+/// }
+/// ```
+///
+/// # Response objects
+///
+/// Returns a similar shaped JSON object which containes the outcome of the request.
+///
+/// ```json
+/// {
+///     "type": "AUTHENTICATED",
+/// }
+/// ```
+///
+/// The possible types are defined in [`AuthError`](../responses/enum.AuthError.html)
+#[post("/auth", format = "application/json", data = "<req>")]
+pub fn auth(mut cookies: Cookies, req: Json<AuthRequest>) -> JsonResult<AuthSuccess, AuthError> {
+    use super::requests::AuthRequest::{Authenticate, Deauthenticate};
 
-/// Authenticate user and return a special session cookie for the current session
-#[post(
-    "/login",
-    format = "application/x-www-form-urlencoded",
-    data = "<login_form>"
-)]
-pub fn login<'a>(
-    mut cookies: Cookies,
-    login_form: Form<'a, LoginForm<'a>>,
-) -> JsonResult<LoginFormSuccess, LoginFormError> {
-    use crate::auth::forms::{LoginFormError::*, LoginFormSuccess::*};
+    match *req {
+        Authenticate(AuthPayload {
+            ref raw_username,
+            ref raw_password,
+        }) => {
+            // [..] is used to turn &String into &str
+            let username = raw_username[..].try_into().map_err(Json)?;
+            let password = raw_password[..].try_into().map_err(Json)?;
 
-    let username = login_form
-        .get()
-        .username()
-        .ok_or_else(|| Json(InvalidUsername))?;
-    info!("login request from '{}'", username);
-    let password = login_form
-        .get()
-        .password()
-        .ok_or_else(|| Json(InvalidPassword))?;
+            authenticate(&username, &password).map(|token| {
+                cookies.add_private(token.into());
+                info!("user '{}' authenticated successfully", username);
+                AuthSuccess::Authenticated
+            })
+        }
+        Deauthenticate(_) => {
+            let cookie = cookies
+                .get_private(USER_TOKEN_NAME)
+                .ok_or(AuthError::MissingToken)
+                .map_err(Json)?;
 
-    authenticate(username, password)
-        .ok_or_else(|| Json(InvalidPassword))
-        .map(|token| {
-            cookies.add_private(Cookie::new("user_token", token.into_inner()));
-            trace!("added cookie: 'user_token'");
-            info!("user '{}' logged in successfully", username);
-            Json(Authenticated)
-        })
+            deauthenticate(&cookie).map(|_| {
+                info!("user deauthenticated successfully");
+                cookies.remove_private(cookie);
+                AuthSuccess::Deauthenticated
+            })
+        }
+    }.map(Json)
+    .map_err(Json)
 }
 
 /*

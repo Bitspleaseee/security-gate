@@ -23,8 +23,12 @@ extern crate serde_derive;
 mod auth;
 mod content;
 
+/// Convenience wrapper around a `Result` of `Json` values
+type JsonResult<T, E> = Result<rocket_contrib::Json<T>, rocket_contrib::Json<E>>;
+
 fn main() {
     rocket::ignite()
-        .mount("/", routes![auth::routes::login, content::routes::index])
+        .mount("/", routes![content::routes::index])
+        .mount("/api/", routes![auth::routes::auth])
         .launch();
 }
