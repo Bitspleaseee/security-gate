@@ -1,3 +1,8 @@
+use super::data::CategoryId;
+use super::data::ThreadId;
+use super::data::CommentId;
+use super::data::OptId;
+
 #[get("/")]
 fn index() -> &'static str {
     "Homepage"
@@ -11,23 +16,17 @@ fn search(searchStr: String, remote_addr: SocketAddr) -> String {
     info!("{}: sent search request to controller. search-string: {}", remote_addr, searchstring);
     JSON(result);
 }
-
-/// Get all categories.
-#[get("/category")]
-fn getAllCategories(remote_addr: SocketAddr) -> String {
-    //let result = controller.getAllCategories();
-    info!("{}: sent request of getting list of all categories to controller", remote_addr);
-    JSON(result);
-}
+*/
 
 /// Get all threads in category.
-#[get("/category/<category>")]
-fn getCategory(category: u32, remote_addr: SocketAddr) -> String {
+#[get("/category/<opt_id>")]
+fn getCategory(opt_id: OptId<CategoryId>) -> JsonResult<CategorySuccess, CategoryFailure> {
     //let result = controller.getCategory(category);
-    info!("{}: sent request of getting category with id {} to controller", remote_addr, category);
+    info!("Sent request of getting category with id {} to controller", category);
     JSON(result);
 }
 
+/*
 /// Make a new category
 #[post("/category/new", format = "application/x-www-form-urlencoded", data = "<input>")]
 fn addCategory(cookies: Cookies, input: Form<Category>, remote_addr: SocketAddr) -> String {
