@@ -2,28 +2,69 @@ use super::data::CategoryId;
 use super::data::ThreadId;
 use super::data::CommentId;
 use super::data::OptId;
+use super::responses::CategorySuccess;
+use super::responses::ThreadSuccess;
+use super::responses::CommentSuccess;
+use super::responses::SearchSuccess;
+use super::responses::GetError;
+use crate::JsonResult;
+use rocket_contrib::Json;
 
 #[get("/")]
 fn index() -> &'static str {
     "Homepage"
 }
 
-/*
-/// Search.
-#[get("/search?q=<searchStr>")]
-fn search(searchStr: String, remote_addr: SocketAddr) -> String {
-    //result = controller.search(searchStr);
-    info!("{}: sent search request to controller. search-string: {}", remote_addr, searchstring);
-    JSON(result);
-}
-*/
 
-/// Get all threads in category.
+/// Search.
+#[get("/search?<search_str>")]
+fn search(search_str: String) -> JsonResult<SearchSuccess, GetError> {
+    //result = controller.search(searchStr);
+    info!("sent search request to controller. search-string: {}", search_string);
+    Json(result);
+}
+
+
+/// Get a category (name/description), or all categories.
 #[get("/category/<opt_id>")]
-fn getCategory(opt_id: OptId<CategoryId>) -> JsonResult<CategorySuccess, CategoryFailure> {
+fn getCategory(opt_id: OptId<CategoryId>) -> JsonResult<CategorySuccess, GetError> {
+    match opt_id {
+        Some(id) => {           // Get a category
+            //let result = controller.getCategory(category);
+            trace!("Getting category with id {}", opt_id);
+            "{\"response\": \"hello\"}"
+        },
+        None => {               // Get all categories
+            //let result = controller.getAllCategory();
+            trace!("Getting all categories");
+            "{\"response\": \"hello\"}"
+        }
+    }.map(Json).map_err(Json)
+}
+
+/// Get a categories threads.
+#[get("/category/<id>/threads")]
+fn getThreadsInCategory(id: CategoryId) -> JsonResult<ThreadSuccess, GetError> {
     //let result = controller.getCategory(category);
-    info!("Sent request of getting category with id {} to controller", category);
-    JSON(result);
+    trace!("Getting all threads from category with id {}", id);
+    Json("{\"response\": \"hello\"}")
+}
+
+/// Get a thread (name/description), or all categories.
+#[get("/thread/<opt_id>")]
+fn getCategory(opt_id: OptId<CategoryId>) -> JsonResult<CategorySuccess, GetError> {
+    match opt_id {
+        Some(id) => {           // Get a category
+            //let result = controller.getCategory(category);
+            trace!("Getting category with id {}", opt_id);
+            "{\"response\": \"hello\"}"
+        },
+        None => {               // Get all categories
+            //let result = controller.getAllCategory();
+            trace!("Getting all categories");
+            "{\"response\": \"hello\"}"
+        }
+    }.map(Json).map_err(Json)
 }
 
 /*

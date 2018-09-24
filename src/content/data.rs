@@ -27,8 +27,27 @@ pub struct Category<'a> {
     description: &'a str
 }
 
+// TODO: Make this function correctly
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SearchResult<'a> {
+    id: CategoryId, // TODO make own ID type
+    title: &'a str,
+    description: &'a str
+}
+
 /// Marker trait to simplify implementations of actions on any id-type
 trait Id {}
+
+macro_rules! impl_from_str {
+    ($id:ty, $from_ty:ty) => {
+        impl<'a> FromStr<'a> for $id {
+            type Err = <$id as FromStr>::Err;
+            fn from_str(s: &'a str) -> Result<Self, Self::Err> {
+                s.parse::<$from_ty>().map($id)
+            }
+        }
+    };
+}
 
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub struct CategoryId(u32);
@@ -81,16 +100,4 @@ impl<'a, I: Id + FromStr> FromParam<'a> for OptId<I> {
     fn from_param(param: &'a RawStr) ->Result<Self, Self::Error> {
         param.as_ref().try_into().map_err(|_| GetError::InvalidId)
     }
-}
-
-
-macro_rules! impl_from_str {
-    ($id:ty, $from_ty:ty) => {
-        impl<'a> FromStr<'a> for $id {
-            type Err = <$id as FromStr>::Err;
-            fn from_str(s: &'a str) -> Result<Self, Self::Err> {
-                s.parse::<$from_ty>().map($id)
-            }
-        }
-    };
 }
