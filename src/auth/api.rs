@@ -18,6 +18,10 @@ pub fn deauthenticate<'a>(_token: impl Into<Token<'a>>) -> Result<(), AuthError>
     Ok(())
 }
 
+pub fn authenticated<'a>(_token: impl Into<Token<'a>>) -> Result<(), AuthError> {
+    Ok(())
+}
+
 pub struct Token<'a>(Cow<'a, str>);
 
 impl<'a> Token<'a> {

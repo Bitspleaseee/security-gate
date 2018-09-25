@@ -3,13 +3,17 @@ use std::convert::TryFrom;
 use std::str::FromStr;
 use std::convert::TryInto;
 use rocket::request::FromParam;
+use rocket::request::FromFormValue;
 use rocket::http::RawStr;
 use super::responses::GetError;
+use crate::auth::requests::Username;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Comment<'a> {
+    id: CommentId,
     content: &'a str,
-    thread: CommentId // TODO make own ID type
+    thread: ThreadId, // TODO make own ID type
+    uid: UserId
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -27,12 +31,44 @@ pub struct Category<'a> {
     description: &'a str
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct User<'a> {
+    id: UserId, // TODO make own ID type
+    username: Username<'a>,
+    description: &'a str,
+    avatar: &'a str
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct OkMessage<'a> {
+    ok: bool,
+    message: &'a str
+}
+
 // TODO: Make this function correctly
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SearchResult<'a> {
     id: CategoryId, // TODO make own ID type
     title: &'a str,
     description: &'a str
+}
+
+#[derive_FromForm]
+pub struct SearchQuery<'a> {
+    q: QueryStr<'a>
+}
+
+pub struct QueryStr<'a>(&'a str);
+
+impl<'v> FromFormValue<'v> for QueryStr<'v> {
+    type Error = &'v RawStr;
+
+    fn from_form_value(search: &'v RawStr) -> Result<QueryStr, &'v RawStr> {
+        match search.parse::<&str>() {
+            Ok(search) if search != "" => Ok(QueryStr(search)),
+            _ => Err(search),
+        }
+    }
 }
 
 /// Marker trait to simplify implementations of actions on any id-type
@@ -49,19 +85,34 @@ macro_rules! impl_from_str {
     }
 }
 
+macro_rules! impl_from_param {
+    ($ty:ty) => {
+        impl<'a> FromParam<'a> for $ty {
+            type Error = GetError;
+            fn from_param(param: &'a RawStr) ->Result<Self, Self::Error> {
+                let s: &'a str = param.as_ref();
+                s.parse().map_err(|_| GetError::InvalidId)
+            }
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub struct CategoryId(u32);
 impl_from_str!(CategoryId, CategoryId, u32);
+imple_from_param!(CategoryId);
 impl Id for CategoryId {}
 
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub struct ThreadId(u32);
 impl_from_str!(ThreadId, ThreadId, u32);
+imple_from_param!(ThreadId);
 impl Id for ThreadId {}
 
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub struct CommentId(u32);
 impl_from_str!(CommentId, CommentId, u32);
+imple_from_param!(CommentId);
 impl Id for CommentId {}
 
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug)]

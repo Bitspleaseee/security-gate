@@ -1,7 +1,9 @@
 use super::data::Category;
 use super::data::Thread;
 use super::data::Comment;
+use super::data::User;
 use super::data::SearchResult;
+use super::data::OkMessage;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum SearchSuccess<'a> {
@@ -22,8 +24,18 @@ pub enum ThreadSuccess<'a> {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum CommentSuccess<'a> {
-    MultipleComments(#[serde(borrow)]Vec<Thread<'a>>),
-    SingleThread(#[serde(borrow)]Thread<'a>),
+    MultipleComments(#[serde(borrow)]Vec<Comment<'a>>),
+    SingleComment(#[serde(borrow)]Comment<'a>),
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum UserSuccess<'a> {
+    SingleUser(#[serde(borrow)]User<'a>),
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum OkSuccess<'a> {
+    Ok(#[serde(borrow)]OkMessage<'a>),
 }
 
 #[derive(Fail, Serialize, Deserialize, Debug)]
@@ -36,5 +48,11 @@ pub enum GetError {
     #[fail(display = "content is hidden")]
     Hidden,
     #[fail(display = "passed invalid id")]
-    InvalidId
+    InvalidId,
+    #[fail(display = "token missing from cookies")]
+    MissingToken,
+    #[fail(display = "token not correct")]
+    TokenNotCorrect,
+    #[fail(display = "query was wrong")]
+    InvalidQuery,
 }
