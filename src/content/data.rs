@@ -3,7 +3,8 @@ use std::convert::TryFrom;
 use std::str::FromStr;
 use std::convert::TryInto;
 use rocket::request::FromParam;
-use rocket::request::FromFormValue;
+// TODO uncomment this when its needed for a valid implementation for QueryStr
+//use rocket::request::FromFormValue;
 use rocket::http::RawStr;
 use super::responses::GetError;
 use crate::auth::requests::Username;
@@ -53,23 +54,29 @@ pub struct SearchResult<'a> {
     description: &'a str
 }
 
-#[derive_FromForm]
+// TODO uncomment when a valid implementation for `QueryStr` exists
+//#[derive_FromForm]
 pub struct SearchQuery<'a> {
     q: QueryStr<'a>
 }
 
 pub struct QueryStr<'a>(&'a str);
 
-impl<'v> FromFormValue<'v> for QueryStr<'v> {
-    type Error = &'v RawStr;
-
-    fn from_form_value(search: &'v RawStr) -> Result<QueryStr, &'v RawStr> {
-        match search.parse::<&str>() {
-            Ok(search) if search != "" => Ok(QueryStr(search)),
-            _ => Err(search),
-        }
-    }
-}
+// impl<'v> FromFormValue<'v> for QueryStr<'v> {
+//     type Error = &'v RawStr;
+//
+//     fn from_form_value(search: &'v RawStr) -> Result<QueryStr, &'v RawStr> {
+//         // TODO a raw string is always a correct str, hence you can use `search.as_ref()` which will
+//         // return a `&str`. Parse is used to convert between different values, e.g from str to
+//         // number. See [`FromStr`](https://doc.rust-lang.org/std/str/trait.FromStr.html)
+//         match search.parse::<&str>() {
+//             // TODO stronger vertification (only ascii chars and limited length?). You can see how
+//             // this was done for `Username` and `Password` in the `auth` module.
+//             Ok(search) if search != "" => Ok(QueryStr(search)),
+//             _ => Err(search),
+//         }
+//     }
+// }
 
 /// Marker trait to simplify implementations of actions on any id-type
 trait Id {}
@@ -121,27 +128,17 @@ impl_from_str!(UserId, UserId, u32);
 impl_from_param!(UserId);
 impl Id for UserId {}
 
-impl<'a, I: Id + FromStr> FromParam<'a> for I {
-    type Error = GetError;
-    fn from_param(param: &'a RawStr) ->Result<Self, Self::Error> {
-        let s: &'a str = param.as_ref();
-        s.parse().map_err(|_| GetError::InvalidId)
-    }
-}
-
-
 /// Optional wrapper for any type which implements Id
+///
+/// The reason for this wrapper is to be able to implement a custom `TryFrom` and `FromParam` for
+/// `OptId` which takes into account if the value is empty.
 pub struct OptId<I: Id>(Option<I>);
 
 impl<'v, I: Id + FromStr> TryFrom<&'v str> for OptId<I> {
     type Error = <I as FromStr>::Err;
 
     fn try_from(s: &'v str) -> Result<Self, Self::Error> {
-
-        if s.is_empty() {
-            return Ok(OptId(None)); // string = ""
-        }
-
+        if s.is_empty() { return Ok(OptId(None)); }
         s.parse().map(|id| OptId(Some(id)))
     }
 }

@@ -13,7 +13,7 @@ use super::data::CommentId;
 )]
 pub enum CategoryRequest<'a> {
     Add(#[serde(rename = "payload")] AddPayload),
-    Edit(#[serde(rename = "payload")] Category<'a>),
+    Edit(#[serde(rename = "payload", borrow)] Category<'a>),
     Hide(#[serde(rename = "payload")] HideCategoryPayload),
 }
 
@@ -25,7 +25,7 @@ pub enum CategoryRequest<'a> {
 )]
 pub enum ThreadRequest<'a> {
     Add(#[serde(rename = "payload")] AddPayload),
-    Edit(#[serde(rename = "payload")] Thread<'a>),
+    Edit(#[serde(rename = "payload", borrow)] Thread<'a>),
     Hide(#[serde(rename = "payload")] HideThreadPayload),
 }
 
@@ -37,7 +37,7 @@ pub enum ThreadRequest<'a> {
 )]
 pub enum CommentRequest<'a> {
     Add(#[serde(rename = "payload")] AddPayload),
-    Edit(#[serde(rename = "payload")] Comment<'a>),
+    Edit(#[serde(rename = "payload", borrow)] Comment<'a>),
     Hide(#[serde(rename = "payload")] HideCommentPayload),
 }
 
