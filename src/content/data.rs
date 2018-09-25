@@ -94,9 +94,9 @@ impl Display for QueryStr<'_> {
 // }
 
 /// Marker trait to simplify implementations of actions on any id-type
-trait Id {}
+pub trait Id {}
 
-macro_rules! impl_from_str {
+macro_rules! id_impls {
     ($ty:ty, $exp:expr, $from_ty:ty) => {
         impl FromStr for $ty {
             type Err = <$from_ty as FromStr>::Err;
@@ -104,11 +104,7 @@ macro_rules! impl_from_str {
                 s.parse::<$from_ty>().map($exp)
             }
         }
-    }
-}
 
-macro_rules! impl_from_param {
-    ($ty:ty) => {
         impl<'a> FromParam<'a> for $ty {
             type Error = GetError;
             fn from_param(param: &'a RawStr) ->Result<Self, Self::Error> {
@@ -121,26 +117,22 @@ macro_rules! impl_from_param {
 
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub struct CategoryId(u32);
-impl_from_str!(CategoryId, CategoryId, u32);
-impl_from_param!(CategoryId);
+id_impls!(CategoryId, CategoryId, u32);
 impl Id for CategoryId {}
 
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub struct ThreadId(u32);
-impl_from_str!(ThreadId, ThreadId, u32);
-impl_from_param!(ThreadId);
+id_impls!(ThreadId, ThreadId, u32);
 impl Id for ThreadId {}
 
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub struct CommentId(u32);
-impl_from_str!(CommentId, CommentId, u32);
-impl_from_param!(CommentId);
+id_impls!(CommentId, CommentId, u32);
 impl Id for CommentId {}
 
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub struct UserId(u32);
-impl_from_str!(UserId, UserId, u32);
-impl_from_param!(UserId);
+id_impls!(UserId, UserId, u32);
 impl Id for UserId {}
 
 /// Optional wrapper for any type which implements Id
