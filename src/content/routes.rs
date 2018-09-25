@@ -6,11 +6,13 @@ use super::data::ThreadId;
 use super::data::CommentId;
 use super::data::OptId;
 use super::data::UserId;
-use super::data::SearchQuery;
+// TODO uncomment when valid impl for 'SearchQuery'
+//use super::data::SearchQuery;
 use super::responses::CategorySuccess;
 use super::responses::ThreadSuccess;
 use super::responses::CommentSuccess;
-use super::responses::SearchSuccess;
+// TODO uncomment when valid impl for 'SearchQuery'
+//use super::responses::SearchSuccess;
 use super::responses::OkSuccess;
 use super::responses::GetError;
 use super::requests::CategoryRequest;
@@ -30,26 +32,27 @@ fn index() -> &'static str {
 
 
 /// Search.
-#[get("/search?<search_str>")]
-fn search<'a>(search_str: SearchQuery) -> JsonResult<SearchSuccess<'a>, GetError> {
-    //result = controller.search(searchStr);
-    trace!("sent search request to controller. search-string: {:?}", search_str);
-    Err(GetError::InvalidId).map(Json).map_err(Json)
-}
+// TODO uncomment when a valid implementation for 'FromForm' exists for 'SearchQuery'
+//#[get("/search?<search_str>")]
+//fn search<'a>(search_str: SearchQuery<'a>) -> JsonResult<SearchSuccess<'a>, GetError> {
+//    //result = controller.search(search_str);
+//    trace!("sent search request to controller. search-string: {:?}", search_str);
+//    Err(GetError::InvalidId).map(Json).map_err(Json)
+//}
 
 
 /// Get a category (name/description), or all categories (limited).
 #[get("/category/<opt_id>")]
-fn getCategory<'a>(opt_id: OptId<CategoryId>) -> JsonResult<CategorySuccess<'a>, GetError> {
+fn get_category<'a>(opt_id: OptId<CategoryId>) -> JsonResult<CategorySuccess<'a>, GetError> {
     match *opt_id {
         Some(id) => {           // Get a category
-            //let result = controller.getCategory(id);
+            //let result = controller.get_category(id);
             trace!("Getting category with id {:?}", id);
             "{\"response\": \"hello\"}";
             Err(GetError::InvalidId)
         },
         None => {               // Get all categories
-            //let result = controller.getAllCategory();
+            //let result = controller.get_all_category();
             trace!("Getting all categories");
             "{\"response\": \"hello\"}";
             Err(GetError::InvalidId)
@@ -59,26 +62,24 @@ fn getCategory<'a>(opt_id: OptId<CategoryId>) -> JsonResult<CategorySuccess<'a>,
 
 /// Get a categories threads.
 #[get("/category/<id>/threads")]
-fn getThreadsInCategory<'a>(id: CategoryId) -> JsonResult<ThreadSuccess<'a>, GetError> {
+fn get_threads_category<'a>(id: CategoryId) -> JsonResult<ThreadSuccess<'a>, GetError> {
     trace!("Getting all threads from category with id {:?}", id);
-    //let result = controller.getThreadsInCategory(id).map(Json).map_err(Json)
+    //let result = controller.get_threads_in_category(id).map(Json).map_err(Json)
     Err(GetError::InvalidId).map(Json).map_err(Json)
 }
 
 /// Get a thread (name/description), or all categories (limited).
 #[get("/thread/<opt_id>")]
-fn getThread<'a>(opt_id: OptId<ThreadId>) -> JsonResult<ThreadSuccess<'a>, GetError> {
+fn get_thread<'a>(opt_id: OptId<ThreadId>) -> JsonResult<ThreadSuccess<'a>, GetError> {
     match *opt_id {
         Some(id) => {           // Get a thread
-            //let result = controller.getThread(id);
+            //let result = controller.get_thread(id);
             trace!("Getting thread with id {:?}", id);
-            Ok("{\"response\": \"hello\"}");
             Err(GetError::InvalidId)
         },
         None => {               // Get all threads
-            //let result = controller.getAllThreads();
+            //let result = controller.get_all_threads();
             trace!("Getting all threads");
-            Ok("{\"response\": \"hello\"}");
             Err(GetError::InvalidId)
         }
     }.map(Json).map_err(Json)
@@ -86,26 +87,24 @@ fn getThread<'a>(opt_id: OptId<ThreadId>) -> JsonResult<ThreadSuccess<'a>, GetEr
 
 /// Get a threads comments.
 #[get("/thread/<id>/comments")]
-fn getCommentsInThread<'a>(id: ThreadId) -> JsonResult<CommentSuccess<'a>, GetError> {
+fn get_comments_in_thread<'a>(id: ThreadId) -> JsonResult<CommentSuccess<'a>, GetError> {
     trace!("Getting all comments from thread with id {:?}", id);
-    //let result = controller.getCommentInThread(id).map(Json).map_err(Json)
+    //let result = controller.get_comment_in_thread(id).map(Json).map_err(Json)
     Err(GetError::InvalidId).map(Json).map_err(Json)
 }
 
 /// Get a comment or all comments (limited).
 #[get("/comments/<opt_id>")]
-fn getComment<'a>(opt_id: OptId<CommentId>) -> JsonResult<CommentSuccess<'a>, GetError> {
+fn get_comment<'a>(opt_id: OptId<CommentId>) -> JsonResult<CommentSuccess<'a>, GetError> {
     match *opt_id {
         Some(id) => {           // Get a comment
-            //let result = controller.getComment(id);
+            //let result = controller.get_comment(id);
             trace!("Getting thread with id {:?}", id);
-            Ok("{\"response\": \"hello\"}");
             Err(GetError::InvalidId)
         },
         None => {               // Get all comments
-            //let result = controller.getAllComments();
+            //let result = controller.get_all_comments();
             trace!("Getting all threads");
-            Ok("{\"response\": \"hello\"}");
             Err(GetError::InvalidId)
         }
     }.map(Json).map_err(Json)
@@ -113,14 +112,14 @@ fn getComment<'a>(opt_id: OptId<CommentId>) -> JsonResult<CommentSuccess<'a>, Ge
 
 /// Get user info.
 #[get("/user/<id>")]
-fn getUser<'a>(id: UserId) -> JsonResult<ThreadSuccess<'a>, GetError> {
+fn get_user<'a>(id: UserId) -> JsonResult<ThreadSuccess<'a>, GetError> {
     trace!("Getting user with id {:?}", id);
-    //let result = controller.getCommentInThread(id).map(Json).map_err(Json)
+    //let result = controller.get_comment_in_thread(id).map(Json).map_err(Json)
     Err(GetError::InvalidId).map(Json).map_err(Json)
 }
 
 #[post("/category", format = "application/json", data = "<req>")]
-pub fn postCategory<'a>(mut cookies: Cookies, req: Json<CategoryRequest>) -> JsonResult<OkSuccess<'a>, GetError> {
+pub fn post_category<'a>(mut cookies: Cookies, req: Json<CategoryRequest>) -> JsonResult<OkSuccess<'a>, GetError> {
 
     let cookie = cookies
                 .get_private(USER_TOKEN_NAME)
@@ -141,21 +140,21 @@ pub fn postCategory<'a>(mut cookies: Cookies, req: Json<CategoryRequest>) -> Jso
             //let title = raw_title[..].try_into().map_err(Json)?;
             //let description = raw_description[..].try_into().map_err(Json)?;
 
-            //newCategory(title, description)
+            //new_category(title, description)
             Err(GetError::InvalidId)
         }
-        CategoryRequest::Edit(Category {
-            ref id,
-            ref title,
-            ref description
-        }) => {
-            //editCategory(title, description)
-            Err(GetError::InvalidId)
-        }
+        //CategoryRequest::Edit(Category {
+        //    ref id,
+        //    ref title,
+        //    ref description
+        //}) => {
+        //    //edit_category(title, description)
+        //    Err(GetError::InvalidId)
+        //}
         CategoryRequest::Hide(HideCategoryPayload {
             ref id,
         }) => {
-           //hideCategory(title, description)
+           //hide_category(title, description)
             Err(GetError::InvalidId)
         }
     }.map(Json)
@@ -163,7 +162,7 @@ pub fn postCategory<'a>(mut cookies: Cookies, req: Json<CategoryRequest>) -> Jso
 }
 
 #[post("/thread", format = "application/json", data = "<req>")]
-pub fn postThread<'a>(mut cookies: Cookies, req: Json<ThreadRequest>) -> JsonResult<OkSuccess<'a>, GetError> {
+pub fn post_thread<'a>(mut cookies: Cookies, req: Json<ThreadRequest>) -> JsonResult<OkSuccess<'a>, GetError> {
 
     let cookie = cookies
                 .get_private(USER_TOKEN_NAME)
@@ -184,22 +183,22 @@ pub fn postThread<'a>(mut cookies: Cookies, req: Json<ThreadRequest>) -> JsonRes
             //let title = raw_title[..].try_into().map_err(Json)?;
             //let description = raw_description[..].try_into().map_err(Json)?;
 
-            //newThread(title, description, result.id)      // Send title and description + user-id to controller
+            //new_thread(title, description, result.id)      // Send title and description + user-id to controller
             Err(GetError::InvalidId)
         }
-        ThreadRequest::Edit(Thread {
-            ref id,
-            ref title,
-            ref description,
-            ref category_id
-        }) => {
-            //editThread(title, description, id)
-            Err(GetError::InvalidId)
-        }
+        //ThreadRequest::Edit(Thread {
+        //    ref id,
+        //    ref title,
+        //    ref description,
+        //    ref category_id
+        //}) => {
+        //    //edit_thread(title, description, id)
+        //    Err(GetError::InvalidId)
+        //}
         ThreadRequest::Hide(HideThreadPayload {
             ref id,
         }) => {
-           //hideThread(id)
+           //hide_thread(id)
             Err(GetError::InvalidId)
         }
     }.map(Json)
@@ -207,7 +206,7 @@ pub fn postThread<'a>(mut cookies: Cookies, req: Json<ThreadRequest>) -> JsonRes
 }
 
 #[post("/comment", format = "application/json", data = "<req>")]
-pub fn postComment<'a>(mut cookies: Cookies, req: Json<CommentRequest>) -> JsonResult<OkSuccess<'a>, GetError> {
+pub fn post_comment<'a>(mut cookies: Cookies, req: Json<CommentRequest>) -> JsonResult<OkSuccess<'a>, GetError> {
 
     let cookie = cookies
                 .get_private(USER_TOKEN_NAME)
@@ -225,23 +224,25 @@ pub fn postComment<'a>(mut cookies: Cookies, req: Json<CommentRequest>) -> JsonR
             ref raw_description,
         }) => {
             // [..] is used to turn &String into &str
-            let title = raw_title[..].try_into().map_err(Json)?;
-            let description = raw_description[..].try_into().map_err(Json)?;
+            //let title = raw_title[..].try_into().map_err(Json)?;
+            //let description = raw_description[..].try_into().map_err(Json)?;
 
-            //newComment(title, description, result.id)      // Send title and description + user-id to controller
+            //new_comment(title, description, result.id)      // Send title and description + user-id to controller
             Err(GetError::InvalidId)
         }
-        CommentRequest::Edit(Comment {
-            ref content,
-            ref thread
-        }) => {
-            //editComment(title, description, id)
-            Err(GetError::InvalidId)
-        }
+        //CommentRequest::Edit(Comment {
+        //    ref id,
+        //    ref uid,
+        //    ref content,
+        //    ref thread
+        //}) => {
+        //    //edit_comment(title, description, id)
+        //    Err(GetError::InvalidId)
+        //}
         CommentRequest::Hide(HideCommentPayload {
             ref id,
         }) => {
-           //hideComment(id)
+           //hide_comment(id)
             Err(GetError::InvalidId)
         }
     }.map(Json)
@@ -252,11 +253,11 @@ pub fn postComment<'a>(mut cookies: Cookies, req: Json<CommentRequest>) -> JsonR
 /*
 /// Make a new category
 #[post("/category/new", format = "application/x-www-form-urlencoded", data = "<input>")]
-fn addCategory(cookies: Cookies, input: Form<Category>, remote_addr: SocketAddr) -> String {
-    //result = auth.verifyUser(cookies.get_private("user_token"));
+fn add_category(cookies: Cookies, input: Form<Category>, remote_addr: SocketAddr) -> String {
+    //result = auth.verify_user(cookies.get_private("user_token"));
     info!("{}: sent request to verify user to auth-module", remote_addr);
     if result.ok == true && result.role > 1 {                                      // If token is correct and role is moderator or above.
-        //let ret = controller.addCategory(input, result);
+        //let ret = controller.add_category(input, result);
         info!("{}: sent request to add new thread. will be added by user {}", remote_addr, result.username);
         JSON(ret);
     }
@@ -272,11 +273,11 @@ fn addCategory(cookies: Cookies, input: Form<Category>, remote_addr: SocketAddr)
 
 /// Edit category.
 #[post("/category/edit/<cid>", format = "application/x-www-form-urlencoded", data = "<input>")]
-fn editCategory(cookies: Cookies, input: Form<Category>, cid: u32, remote_addr: SocketAddr) -> JSON<OkResponse> {
-    //result = auth.verifyUser(cookies.get_private("user_token"));
+fn edit_category(cookies: Cookies, input: Form<Category>, cid: u32, remote_addr: SocketAddr) -> JSON<OkResponse> {
+    //result = auth.verify_user(cookies.get_private("user_token"));
     info!("{}: sent request to verify user to auth-module", remote_addr);
     if result.ok == true && result.role == 3 {                     // If token is correct and user is admin.
-        //let ret = controller.editCategory(input, result, cid);
+        //let ret = controller.edit_category(input, result, cid);
         info!("{}: sent request to edit category with id {}, for user {} to controller", remote_addr, cid, result.username);
         JSON(ret);
     }
@@ -292,11 +293,11 @@ fn editCategory(cookies: Cookies, input: Form<Category>, cid: u32, remote_addr: 
 
 /// Hide category.
 #[post("/category/hide/<cid>", format = "application/x-www-form-urlencoded", data = "<input>")]
-fn hideCategory(cookies: Cookies, input: Form<Category>, cid: u32, remote_addr: SocketAddr) -> JSON<OkResponse> {
-    //result = auth.verifyUser(cookies.get_private("user_token"));
+fn hide_category(cookies: Cookies, input: Form<Category>, cid: u32, remote_addr: SocketAddr) -> JSON<OkResponse> {
+    //result = auth.verify_user(cookies.get_private("user_token"));
     info!("{}: sent request to verify user to auth-module", remote_addr);
     if result.ok == true && result.role == 3 {                     // If token is correct and user is admin.
-        //let ret = controller.hideCategory(input, result, cid);
+        //let ret = controller.hide_category(input, result, cid);
         info!("{}: sent request to hide category with id {}, for user {} to controller", remote_addr, cid, result.username);
         JSON(ret);
     }
@@ -313,11 +314,11 @@ fn hideCategory(cookies: Cookies, input: Form<Category>, cid: u32, remote_addr: 
 
 /// Make a new thread.
 #[post("/thread/new", format = "application/x-www-form-urlencoded", data = "<input>")]
-fn addThread(cookies: Cookies, input: Form<Thread>, remote_addr: SocketAddr) -> String {
-    //result = auth.verifyUser(cookies.get_private("user_token"))
+fn add_thread(cookies: Cookies, input: Form<Thread>, remote_addr: SocketAddr) -> String {
+    //result = auth.verify_user(cookies.get_private("user_token"))
     info!("{}: sent request to verify user to auth-module", remote_addr);
     if result.ok == true {                                      // If token is correct.
-        //let ret = controller.addThread(input, result);
+        //let ret = controller.add_thread(input, result);
         info!("{}: sent request to add new thread. will be added by user {}", remote_addr, result.username);
         JSON(ret);
     }
@@ -333,11 +334,11 @@ fn addThread(cookies: Cookies, input: Form<Thread>, remote_addr: SocketAddr) -> 
 
 /// Edit thread.
 #[post("/thread/edit/<tid>", format = "application/x-www-form-urlencoded", data = "<input>")]
-fn editThread(cookies: Cookies, input: Form<Thread>, tid: u32, remote_addr: SocketAddr) -> JSON<OkResponse> {
-    //result = auth.verifyUser(cookies.get_private("user_token"));
+fn edit_thread(cookies: Cookies, input: Form<Thread>, tid: u32, remote_addr: SocketAddr) -> JSON<OkResponse> {
+    //result = auth.verify_user(cookies.get_private("user_token"));
     info!("{}: sent request to verify user to auth-module", remote_addr);
     if result.ok == true {                                      // If token is correct.
-        //let ret = controller.editThread(input, result, tid);
+        //let ret = controller.edit_thread(input, result, tid);
         info!("{}: sent request to edit thread with id {}, for user {} to controller", remote_addr, tid, result.username);
         JSON(ret);
     }
@@ -353,11 +354,11 @@ fn editThread(cookies: Cookies, input: Form<Thread>, tid: u32, remote_addr: Sock
 
 /// Hide thread.
 #[post("/thread/hide/<tid>", format = "application/x-www-form-urlencoded", data = "<input>")]
-fn hideThread(cookies: Cookies, input: Form<Thread>, tid: u32, remote_addr: SocketAddr) -> JSON<OkResponse> {
-    //result = auth.verifyUser(cookies.get_private("user_token"));
+fn hide_thread(cookies: Cookies, input: Form<Thread>, tid: u32, remote_addr: SocketAddr) -> JSON<OkResponse> {
+    //result = auth.verify_user(cookies.get_private("user_token"));
     info!("{}: sent request to verify user to auth-module", remote_addr);
     if result.ok == true {                                      // If token is correct.
-        //let ret = controller.hideThread(input, result, tid);
+        //let ret = controller.hide_thread(input, result, tid);
         info!("{}: sent request to hide thread with id {}, for user {} to controller", remote_addr, tid, result.username);
         JSON(ret);
     }
@@ -373,8 +374,8 @@ fn hideThread(cookies: Cookies, input: Form<Thread>, tid: u32, remote_addr: Sock
 
 /// Get all comments in a thread.
 #[get("/thread/<thread>")]
-fn getThread(thread: u32, remote_addr: SocketAddr) -> String {
-    //let result = controller.getThread(thread);
+fn get_thread(thread: u32, remote_addr: SocketAddr) -> String {
+    //let result = controller.get_thread(thread);
     info!("{}: sent request of getting thread with id {} to controller", remote_addr, thread);
     JSON(result);
 }
@@ -382,7 +383,7 @@ fn getThread(thread: u32, remote_addr: SocketAddr) -> String {
 /// Comment on a thread.
 #[post("/comment/new", format = "application/x-www-form-urlencoded", data = "<input>")]
 fn comment(cookies: Cookies, input: Form<Comment>, remote_addr: SocketAddr) -> String {
-    //result = authverifyUser(cookies.get_private("user_token"))
+    //result = authverify_user(cookies.get_private("user_token"))
     info!("{}: sent request to verify user to auth-module", remote_addr);
     if result.ok == true {                                      // If token is correct.
         //let ret = controller.comment(input, result);
@@ -402,11 +403,11 @@ fn comment(cookies: Cookies, input: Form<Comment>, remote_addr: SocketAddr) -> S
 
 /// Edit comment.
 #[post("/comment/edit/<cid>", format = "application/x-www-form-urlencoded", data = "<input>")]
-fn editComment(cookies: Cookies, input: Form<Comment>, cid: u32, remote_addr: SocketAddr) -> JSON<OkResponse> {
-    //result = auth.verifyUser(cookies.get_private("user_token"));
+fn edit_comment(cookies: Cookies, input: Form<Comment>, cid: u32, remote_addr: SocketAddr) -> JSON<OkResponse> {
+    //result = auth.verify_user(cookies.get_private("user_token"));
     info!("{}: sent request to verify user to auth-module", remote_addr);
     if result.ok == true {                                      // If token is correct.
-        //let ret = controller.editComment(input, result, cid);
+        //let ret = controller.edit_comment(input, result, cid);
         info!("{}: sent request to edit comment with id {}, for user {} to controller", remote_addr, cid, result.username);
         JSON(ret);
     }
@@ -422,11 +423,11 @@ fn editComment(cookies: Cookies, input: Form<Comment>, cid: u32, remote_addr: So
 
 /// Hide comment.
 #[post("/comment/hide/<cid>", format = "application/x-www-form-urlencoded", data = "<input>")]
-fn hideComment(cookies: Cookies, input: Form<Comment>, cid: u32, remote_addr: SocketAddr) -> JSON<OkResponse> {
-    //result = auth.verifyUser(cookies.get_private("user_token"));
+fn hide_comment(cookies: Cookies, input: Form<Comment>, cid: u32, remote_addr: SocketAddr) -> JSON<OkResponse> {
+    //result = auth.verify_user(cookies.get_private("user_token"));
     info!("{}: sent request to verify user to auth-module", remote_addr);
     if result.ok == true {                                      // If token is correct.
-        //let ret = controller.hideComment(input, result, cid);
+        //let ret = controller.hide_comment(input, result, cid);
         info!("{}: sent request to hide comment with id {}, for user {} to controller", remote_addr, cid, result.username);
         JSON(ret);
     }

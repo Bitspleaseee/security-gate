@@ -1,6 +1,3 @@
-use super::data::Category;
-use super::data::Thread;
-use super::data::Comment;
 use super::data::CategoryId;
 use super::data::ThreadId;
 use super::data::CommentId;
@@ -11,9 +8,11 @@ use super::data::CommentId;
     content = "payload",
     rename_all = "SCREAMING_SNAKE_CASE"
 )]
-pub enum CategoryRequest<'a> {
+pub enum CategoryRequest {
     Add(#[serde(rename = "payload")] AddPayload),
-    Edit(#[serde(rename = "payload", borrow)] Category<'a>),
+    // TODO make a new EditPayload which will contain `Option` types so that if the user
+    // only wants to change the title, the structure will only contain a `Some(title)`
+    //Edit(#[serde(rename = "payload", borrow)] Category<'a>),
     Hide(#[serde(rename = "payload")] HideCategoryPayload),
 }
 
@@ -23,9 +22,11 @@ pub enum CategoryRequest<'a> {
     content = "payload",
     rename_all = "SCREAMING_SNAKE_CASE"
 )]
-pub enum ThreadRequest<'a> {
+pub enum ThreadRequest {
     Add(#[serde(rename = "payload")] AddPayload),
-    Edit(#[serde(rename = "payload", borrow)] Thread<'a>),
+    // TODO make a new EditPayload which will contain `Option` types so that if the user
+    // only wants to change the title, the structure will only contain a `Some(title)`
+    //Edit(#[serde(rename = "payload", borrow)] Thread<'a>),
     Hide(#[serde(rename = "payload")] HideThreadPayload),
 }
 
@@ -35,9 +36,11 @@ pub enum ThreadRequest<'a> {
     content = "payload",
     rename_all = "SCREAMING_SNAKE_CASE"
 )]
-pub enum CommentRequest<'a> {
+pub enum CommentRequest {
     Add(#[serde(rename = "payload")] AddPayload),
-    Edit(#[serde(rename = "payload", borrow)] Comment<'a>),
+    // TODO make a new EditPayload which will contain `Option` types so that if the user
+    // only wants to change the title, the structure will only contain a `Some(title)`
+    //Edit(#[serde(rename = "payload", borrow)] Comment<'a>),
     Hide(#[serde(rename = "payload")] HideCommentPayload),
 }
 
