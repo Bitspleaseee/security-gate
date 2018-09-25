@@ -12,28 +12,28 @@ use crate::auth::requests::Username;
 pub struct Comment<'a> {
     id: CommentId,
     content: &'a str,
-    thread: ThreadId, // TODO make own ID type
+    thread: ThreadId,
     uid: UserId
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Thread<'a> {
-    id: ThreadId, // TODO make own ID type
-    category_id: u32, // TODO make own ID type
+    id: ThreadId,
+    category_id: u32,
     title: &'a str,
     description: &'a str,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Category<'a> {
-    id: CategoryId, // TODO make own ID type
+    id: CategoryId,
     title: &'a str,
     description: &'a str
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct User<'a> {
-    id: UserId, // TODO make own ID type
+    id: UserId,
     username: Username<'a>,
     description: &'a str,
     avatar: &'a str
@@ -48,7 +48,7 @@ pub struct OkMessage<'a> {
 // TODO: Make this function correctly
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SearchResult<'a> {
-    id: CategoryId, // TODO make own ID type
+    id: CategoryId,
     title: &'a str,
     description: &'a str
 }
