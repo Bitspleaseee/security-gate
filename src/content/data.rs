@@ -100,24 +100,25 @@ macro_rules! impl_from_param {
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub struct CategoryId(u32);
 impl_from_str!(CategoryId, CategoryId, u32);
-imple_from_param!(CategoryId);
+impl_from_param!(CategoryId);
 impl Id for CategoryId {}
 
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub struct ThreadId(u32);
 impl_from_str!(ThreadId, ThreadId, u32);
-imple_from_param!(ThreadId);
+impl_from_param!(ThreadId);
 impl Id for ThreadId {}
 
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub struct CommentId(u32);
 impl_from_str!(CommentId, CommentId, u32);
-imple_from_param!(CommentId);
+impl_from_param!(CommentId);
 impl Id for CommentId {}
 
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub struct UserId(u32);
 impl_from_str!(UserId, UserId, u32);
+impl_from_param!(UserId);
 impl Id for UserId {}
 
 impl<'a, I: Id + FromStr> FromParam<'a> for I {
