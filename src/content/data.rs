@@ -1,21 +1,21 @@
-use std::ops::Deref;
+use rocket::request::FromParam;
 use std::convert::TryFrom;
-use std::str::FromStr;
 use std::convert::TryInto;
 use std::fmt::{self, Display};
-use rocket::request::FromParam;
+use std::ops::Deref;
+use std::str::FromStr;
 // TODO uncomment this when its needed for a valid implementation for QueryStr
 //use rocket::request::FromFormValue;
-use rocket::http::RawStr;
 use super::responses::GetError;
 use crate::auth::requests::Username;
+use rocket::http::RawStr;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Comment<'a> {
     id: CommentId,
     content: &'a str,
     thread: ThreadId,
-    uid: UserId
+    uid: UserId,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -30,7 +30,7 @@ pub struct Thread<'a> {
 pub struct Category<'a> {
     id: CategoryId,
     title: &'a str,
-    description: &'a str
+    description: &'a str,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -38,13 +38,13 @@ pub struct User<'a> {
     id: UserId,
     username: Username<'a>,
     description: &'a str,
-    avatar: &'a str
+    avatar: &'a str,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct OkMessage<'a> {
     ok: bool,
-    message: &'a str
+    message: &'a str,
 }
 
 // TODO: Make this function correctly
@@ -52,14 +52,14 @@ pub struct OkMessage<'a> {
 pub struct SearchResult<'a> {
     id: CategoryId,
     title: &'a str,
-    description: &'a str
+    description: &'a str,
 }
 
 // TODO uncomment when a valid implementation for `QueryStr` exists
 //#[derive_FromForm]
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SearchQuery<'a> {
-    q: QueryStr<'a>
+    q: QueryStr<'a>,
 }
 
 impl Display for SearchQuery<'_> {
@@ -107,12 +107,12 @@ macro_rules! id_impls {
 
         impl<'a> FromParam<'a> for $ty {
             type Error = GetError;
-            fn from_param(param: &'a RawStr) ->Result<Self, Self::Error> {
+            fn from_param(param: &'a RawStr) -> Result<Self, Self::Error> {
                 let s: &'a str = param.as_ref();
                 s.parse().map_err(|_| GetError::InvalidId)
             }
         }
-    }
+    };
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug)]
@@ -145,7 +145,9 @@ impl<'v, I: Id + FromStr> TryFrom<&'v str> for OptId<I> {
     type Error = <I as FromStr>::Err;
 
     fn try_from(s: &'v str) -> Result<Self, Self::Error> {
-        if s.is_empty() { return Ok(OptId(None)); }
+        if s.is_empty() {
+            return Ok(OptId(None));
+        }
         s.parse().map(|id| OptId(Some(id)))
     }
 }
@@ -160,7 +162,7 @@ impl<I: Id> Deref for OptId<I> {
 
 impl<'a, I: Id + FromStr> FromParam<'a> for OptId<I> {
     type Error = GetError;
-    fn from_param(param: &'a RawStr) ->Result<Self, Self::Error> {
+    fn from_param(param: &'a RawStr) -> Result<Self, Self::Error> {
         let s: &'a str = param.as_ref();
         s.try_into().map_err(|_| GetError::InvalidId)
     }

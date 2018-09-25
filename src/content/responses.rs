@@ -1,41 +1,41 @@
 use super::data::Category;
-use super::data::Thread;
 use super::data::Comment;
-use super::data::User;
-use super::data::SearchResult;
 use super::data::OkMessage;
+use super::data::SearchResult;
+use super::data::Thread;
+use super::data::User;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum SearchSuccess<'a> {
-    Results(#[serde(borrow)]Vec<SearchResult<'a>>),
+    Results(#[serde(borrow)] Vec<SearchResult<'a>>),
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum CategorySuccess<'a> {
-    MultipleCategories(#[serde(borrow)]Vec<Category<'a>>),
-    SingleCategory(#[serde(borrow)]Category<'a>),
+    MultipleCategories(#[serde(borrow)] Vec<Category<'a>>),
+    SingleCategory(#[serde(borrow)] Category<'a>),
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ThreadSuccess<'a> {
-    MultipleThreads(#[serde(borrow)]Vec<Thread<'a>>),
-    SingleThread(#[serde(borrow)]Thread<'a>),
+    MultipleThreads(#[serde(borrow)] Vec<Thread<'a>>),
+    SingleThread(#[serde(borrow)] Thread<'a>),
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum CommentSuccess<'a> {
-    MultipleComments(#[serde(borrow)]Vec<Comment<'a>>),
-    SingleComment(#[serde(borrow)]Comment<'a>),
+    MultipleComments(#[serde(borrow)] Vec<Comment<'a>>),
+    SingleComment(#[serde(borrow)] Comment<'a>),
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum UserSuccess<'a> {
-    SingleUser(#[serde(borrow)]User<'a>),
+    SingleUser(#[serde(borrow)] User<'a>),
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum OkSuccess<'a> {
-    Ok(#[serde(borrow)]OkMessage<'a>),
+    Ok(#[serde(borrow)] OkMessage<'a>),
 }
 
 #[derive(Fail, Serialize, Deserialize, Debug)]

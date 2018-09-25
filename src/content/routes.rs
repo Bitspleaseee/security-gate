@@ -1,35 +1,36 @@
 use super::data::Category;
-use super::data::Thread;
-use super::data::Comment;
 use super::data::CategoryId;
-use super::data::ThreadId;
+use super::data::Comment;
 use super::data::CommentId;
 use super::data::OptId;
+use super::data::Thread;
+use super::data::ThreadId;
 use super::data::UserId;
 // TODO uncomment when valid impl for 'SearchQuery'
 //use super::data::SearchQuery;
 use super::responses::CategorySuccess;
-use super::responses::ThreadSuccess;
 use super::responses::CommentSuccess;
+use super::responses::ThreadSuccess;
 // TODO uncomment when valid impl for 'SearchQuery'
 //use super::responses::SearchSuccess;
-use super::responses::OkSuccess;
-use super::responses::GetError;
 use super::requests::CategoryRequest;
-use super::requests::ThreadRequest;
 use super::requests::CommentRequest;
-use crate::JsonResult;
-use crate::content::requests::{AddPayload, HideCategoryPayload, HideThreadPayload, HideCommentPayload};
+use super::requests::ThreadRequest;
+use super::responses::GetError;
+use super::responses::OkSuccess;
 use crate::auth::api::{authenticated, USER_TOKEN_NAME};
-use rocket_contrib::Json;
+use crate::content::requests::{
+    AddPayload, HideCategoryPayload, HideCommentPayload, HideThreadPayload,
+};
+use crate::JsonResult;
 use rocket::http::Cookies;
+use rocket_contrib::Json;
 use std::convert::TryInto;
 
 #[get("/")]
 fn index() -> &'static str {
     "Homepage"
 }
-
 
 /// Search.
 // TODO uncomment when a valid implementation for 'FromForm' exists for 'SearchQuery'
@@ -40,24 +41,24 @@ fn index() -> &'static str {
 //    Err(GetError::InvalidId).map(Json).map_err(Json)
 //}
 
-
 /// Get a category (name/description), or all categories (limited).
 #[get("/category/<opt_id>")]
 fn get_category<'a>(opt_id: OptId<CategoryId>) -> JsonResult<CategorySuccess<'a>, GetError> {
     match *opt_id {
-        Some(id) => {           // Get a category
+        Some(id) => {
+            // Get a category
             //let result = controller.get_category(id);
             trace!("Getting category with id {:?}", id);
-            "{\"response\": \"hello\"}";
-            Err(GetError::InvalidId)
-        },
-        None => {               // Get all categories
-            //let result = controller.get_all_category();
-            trace!("Getting all categories");
-            "{\"response\": \"hello\"}";
             Err(GetError::InvalidId)
         }
-    }.map(Json).map_err(Json)
+        None => {
+            // Get all categories
+            //let result = controller.get_all_category();
+            trace!("Getting all categories");
+            Err(GetError::InvalidId)
+        }
+    }.map(Json)
+    .map_err(Json)
 }
 
 /// Get a categories threads.
@@ -72,17 +73,20 @@ fn get_threads_category<'a>(id: CategoryId) -> JsonResult<ThreadSuccess<'a>, Get
 #[get("/thread/<opt_id>")]
 fn get_thread<'a>(opt_id: OptId<ThreadId>) -> JsonResult<ThreadSuccess<'a>, GetError> {
     match *opt_id {
-        Some(id) => {           // Get a thread
+        Some(id) => {
+            // Get a thread
             //let result = controller.get_thread(id);
             trace!("Getting thread with id {:?}", id);
             Err(GetError::InvalidId)
-        },
-        None => {               // Get all threads
+        }
+        None => {
+            // Get all threads
             //let result = controller.get_all_threads();
             trace!("Getting all threads");
             Err(GetError::InvalidId)
         }
-    }.map(Json).map_err(Json)
+    }.map(Json)
+    .map_err(Json)
 }
 
 /// Get a threads comments.
@@ -97,17 +101,20 @@ fn get_comments_in_thread<'a>(id: ThreadId) -> JsonResult<CommentSuccess<'a>, Ge
 #[get("/comments/<opt_id>")]
 fn get_comment<'a>(opt_id: OptId<CommentId>) -> JsonResult<CommentSuccess<'a>, GetError> {
     match *opt_id {
-        Some(id) => {           // Get a comment
+        Some(id) => {
+            // Get a comment
             //let result = controller.get_comment(id);
             trace!("Getting thread with id {:?}", id);
             Err(GetError::InvalidId)
-        },
-        None => {               // Get all comments
+        }
+        None => {
+            // Get all comments
             //let result = controller.get_all_comments();
             trace!("Getting all threads");
             Err(GetError::InvalidId)
         }
-    }.map(Json).map_err(Json)
+    }.map(Json)
+    .map_err(Json)
 }
 
 /// Get user info.
@@ -119,16 +126,18 @@ fn get_user<'a>(id: UserId) -> JsonResult<ThreadSuccess<'a>, GetError> {
 }
 
 #[post("/category", format = "application/json", data = "<req>")]
-pub fn post_category<'a>(mut cookies: Cookies, req: Json<CategoryRequest>) -> JsonResult<OkSuccess<'a>, GetError> {
-
+pub fn post_category<'a>(
+    mut cookies: Cookies,
+    req: Json<CategoryRequest>,
+) -> JsonResult<OkSuccess<'a>, GetError> {
     let cookie = cookies
-                .get_private(USER_TOKEN_NAME)
-                .ok_or(GetError::MissingToken)
-                .map_err(Json)?;
+        .get_private(USER_TOKEN_NAME)
+        .ok_or(GetError::MissingToken)
+        .map_err(Json)?;
 
     let result = authenticated(&cookie);
     if result.is_err() {
-    Err(GetError::TokenNotCorrect).map_err(Json)?;
+        Err(GetError::TokenNotCorrect).map_err(Json)?;
     }
 
     match *req {
@@ -151,10 +160,8 @@ pub fn post_category<'a>(mut cookies: Cookies, req: Json<CategoryRequest>) -> Js
         //    //edit_category(title, description)
         //    Err(GetError::InvalidId)
         //}
-        CategoryRequest::Hide(HideCategoryPayload {
-            ref id,
-        }) => {
-           //hide_category(title, description)
+        CategoryRequest::Hide(HideCategoryPayload { ref id }) => {
+            //hide_category(title, description)
             Err(GetError::InvalidId)
         }
     }.map(Json)
@@ -162,16 +169,18 @@ pub fn post_category<'a>(mut cookies: Cookies, req: Json<CategoryRequest>) -> Js
 }
 
 #[post("/thread", format = "application/json", data = "<req>")]
-pub fn post_thread<'a>(mut cookies: Cookies, req: Json<ThreadRequest>) -> JsonResult<OkSuccess<'a>, GetError> {
-
+pub fn post_thread<'a>(
+    mut cookies: Cookies,
+    req: Json<ThreadRequest>,
+) -> JsonResult<OkSuccess<'a>, GetError> {
     let cookie = cookies
-                .get_private(USER_TOKEN_NAME)
-                .ok_or(GetError::MissingToken)
-                .map_err(Json)?;
+        .get_private(USER_TOKEN_NAME)
+        .ok_or(GetError::MissingToken)
+        .map_err(Json)?;
 
     let result = authenticated(&cookie);
     if result.is_err() {
-    Err(GetError::TokenNotCorrect).map_err(Json)?;
+        Err(GetError::TokenNotCorrect).map_err(Json)?;
     }
 
     match *req {
@@ -195,10 +204,8 @@ pub fn post_thread<'a>(mut cookies: Cookies, req: Json<ThreadRequest>) -> JsonRe
         //    //edit_thread(title, description, id)
         //    Err(GetError::InvalidId)
         //}
-        ThreadRequest::Hide(HideThreadPayload {
-            ref id,
-        }) => {
-           //hide_thread(id)
+        ThreadRequest::Hide(HideThreadPayload { ref id }) => {
+            //hide_thread(id)
             Err(GetError::InvalidId)
         }
     }.map(Json)
@@ -206,16 +213,18 @@ pub fn post_thread<'a>(mut cookies: Cookies, req: Json<ThreadRequest>) -> JsonRe
 }
 
 #[post("/comment", format = "application/json", data = "<req>")]
-pub fn post_comment<'a>(mut cookies: Cookies, req: Json<CommentRequest>) -> JsonResult<OkSuccess<'a>, GetError> {
-
+pub fn post_comment<'a>(
+    mut cookies: Cookies,
+    req: Json<CommentRequest>,
+) -> JsonResult<OkSuccess<'a>, GetError> {
     let cookie = cookies
-                .get_private(USER_TOKEN_NAME)
-                .ok_or(GetError::MissingToken)
-                .map_err(Json)?;
+        .get_private(USER_TOKEN_NAME)
+        .ok_or(GetError::MissingToken)
+        .map_err(Json)?;
 
     let result = authenticated(&cookie);
     if result.is_err() {
-    Err(GetError::TokenNotCorrect).map_err(Json)?;
+        Err(GetError::TokenNotCorrect).map_err(Json)?;
     }
 
     match *req {
@@ -239,16 +248,13 @@ pub fn post_comment<'a>(mut cookies: Cookies, req: Json<CommentRequest>) -> Json
         //    //edit_comment(title, description, id)
         //    Err(GetError::InvalidId)
         //}
-        CommentRequest::Hide(HideCommentPayload {
-            ref id,
-        }) => {
-           //hide_comment(id)
+        CommentRequest::Hide(HideCommentPayload { ref id }) => {
+            //hide_comment(id)
             Err(GetError::InvalidId)
         }
     }.map(Json)
     .map_err(Json)
 }
-
 
 /*
 /// Make a new category

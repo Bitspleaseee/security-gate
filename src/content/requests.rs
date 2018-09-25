@@ -1,6 +1,6 @@
 use super::data::CategoryId;
-use super::data::ThreadId;
 use super::data::CommentId;
+use super::data::ThreadId;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(
@@ -49,7 +49,7 @@ pub struct AddPayload {
     #[serde(rename = "title")]
     pub raw_title: String,
     #[serde(rename = "description")]
-    pub raw_description: String
+    pub raw_description: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
