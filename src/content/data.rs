@@ -2,6 +2,7 @@ use std::ops::Deref;
 use std::convert::TryFrom;
 use std::str::FromStr;
 use std::convert::TryInto;
+use std::fmt::{self, Display};
 use rocket::request::FromParam;
 // TODO uncomment this when its needed for a valid implementation for QueryStr
 //use rocket::request::FromFormValue;
@@ -56,11 +57,25 @@ pub struct SearchResult<'a> {
 
 // TODO uncomment when a valid implementation for `QueryStr` exists
 //#[derive_FromForm]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SearchQuery<'a> {
     q: QueryStr<'a>
 }
 
+impl Display for SearchQuery<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.q)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct QueryStr<'a>(&'a str);
+
+impl Display for QueryStr<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 
 // impl<'v> FromFormValue<'v> for QueryStr<'v> {
 //     type Error = &'v RawStr;
