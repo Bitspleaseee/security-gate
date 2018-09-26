@@ -4,8 +4,8 @@ use std::convert::TryInto;
 use std::fmt::{self, Display};
 use std::ops::Deref;
 use std::str::FromStr;
-// TODO uncomment this when its needed for a valid implementation for QueryStr
-//use rocket::request::FromFormValue;
+use regex::Regex;
+use rocket::request::FromFormValue;
 use super::responses::GetError;
 use crate::auth::requests::Username;
 use rocket::http::RawStr;
@@ -77,21 +77,33 @@ impl Display for QueryStr<'_> {
     }
 }
 
-// impl<'v> FromFormValue<'v> for QueryStr<'v> {
-//     type Error = &'v RawStr;
-//
-//     fn from_form_value(search: &'v RawStr) -> Result<QueryStr, &'v RawStr> {
-//         // TODO a raw string is always a correct str, hence you can use `search.as_ref()` which will
-//         // return a `&str`. Parse is used to convert between different values, e.g from str to
-//         // number. See [`FromStr`](https://doc.rust-lang.org/std/str/trait.FromStr.html)
-//         match search.parse::<&str>() {
-//             // TODO stronger vertification (only ascii chars and limited length?). You can see how
-//             // this was done for `Username` and `Password` in the `auth` module.
-//             Ok(search) if search != "" => Ok(QueryStr(search)),
-//             _ => Err(search),
-//         }
-//     }
-// }
+/// The regex which vertifies that a search-query is more secure.
+const SEARCH_REGEX: &str = "^[a-zA-Z0-9_- æøåÆØÅ]{2,15}$";
+
+impl<'v> FromFormValue<'v> for QueryStr<'v> {
+    type Error = GetError;
+
+    fn from_form_value(search_str: &'v RawStr) -> Result<QueryStr, GetError> {
+        // TODO Don't need? a raw string is always a correct str, hence you can use `search.as_ref()` which will
+        // return a `&str`. Parse is used to convert between different values, e.g from str to
+        // number. See [`FromStr`](https://doc.rust-lang.org/std/str/trait.FromStr.html)
+        //match search.as_ref() {
+            // TODO Finished? stronger vertification (only ascii chars and limited length?). You can see how
+            // this was done for `Username` and `Password` in the `auth` module.
+            // Ok(search) if search != "" => Ok(QueryStr(search)),
+            // _ => Err(search),
+
+            lazy_static! {
+                static ref RE: Regex = Regex::new(SEARCH_REGEX).unwrap();
+            }
+            if RE.is_match(search_str) {
+                Ok(QueryStr(search_str))
+            } else {
+                Err(GetError::InvalidQuery)
+            }
+        //}
+    }
+}
 
 /// Marker trait to simplify implementations of actions on any id-type
 pub trait Id {}
