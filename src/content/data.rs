@@ -6,6 +6,7 @@ use std::ops::Deref;
 use std::str::FromStr;
 use regex::Regex;
 use rocket::request::FromFormValue;
+use rocket::request::{FromForm, FormItems};
 use super::responses::GetError;
 use crate::auth::requests::Username;
 use rocket::http::RawStr;
@@ -57,7 +58,7 @@ pub struct SearchResult<'a> {
 
 // TODO uncomment when a valid implementation for `QueryStr` exists
 //#[derive_FromForm]
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, FromForm)]
 pub struct SearchQuery<'a> {
     q: QueryStr<'a>,
 }

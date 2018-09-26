@@ -6,13 +6,11 @@ use super::data::OptId;
 use super::data::Thread;
 use super::data::ThreadId;
 use super::data::UserId;
-// TODO uncomment when valid impl for 'SearchQuery'
-//use super::data::SearchQuery;
+use super::data::SearchQuery;
 use super::responses::CategorySuccess;
 use super::responses::CommentSuccess;
 use super::responses::ThreadSuccess;
-// TODO uncomment when valid impl for 'SearchQuery'
-//use super::responses::SearchSuccess;
+use super::responses::SearchSuccess;
 use super::requests::CategoryRequest;
 use super::requests::CommentRequest;
 use super::requests::ThreadRequest;
@@ -34,12 +32,12 @@ fn index() -> &'static str {
 
 /// Search.
 // TODO uncomment when a valid implementation for 'FromForm' exists for 'SearchQuery'
-//#[get("/search?<search_str>")]
-//fn search<'a>(search_str: SearchQuery<'a>) -> JsonResult<SearchSuccess<'a>, GetError> {
-//    //result = controller.search(search_str);
-//    trace!("sent search request to controller. search-string: {:?}", search_str);
-//    Err(GetError::InvalidId).map(Json).map_err(Json)
-//}
+#[get("/search?<search_str>")]
+fn search<'a>(search_str: SearchQuery<'a>) -> JsonResult<SearchSuccess<'a>, GetError> {
+   //result = controller.search(search_str);
+   trace!("sent search request to controller. search-string: {:?}", search_str);
+   Err(GetError::InvalidId).map(Json).map_err(Json)
+}
 
 /// Get a category (name/description), or all categories (limited).
 #[get("/category/<opt_id>")]

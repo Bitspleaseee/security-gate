@@ -1,6 +1,7 @@
 #![feature(plugin)]
 #![feature(try_from)]
 #![plugin(rocket_codegen)]
+#![feature(custom_derive)]
 // These clippy lints are unreasonable, hence they are disabled
 #![feature(tool_lints)]
 #![allow(clippy::suspicious_else_formatting)]
