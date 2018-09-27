@@ -33,23 +33,23 @@ pub enum AuthError {
 
 struct Autenticated(u32);
 
-impl<'a, 'r> FromRequest<'a, 'r> for Autenticated {
-    type Error = AuthError;
+// impl<'a, 'r> FromRequest<'a, 'r> for Autenticated {
+//     type Error = AuthError;
 
-    fn from_request(request: &'a Request<'r>) -> request::Outcome<Autenticated, AuthError> {
-        let cookie = request.cookies()
-        .get_private(USER_TOKEN_NAME);
-        //TODO: Fix errormessage:
-        //.ok_or(AuthError::MissingToken)
-        //.map_err(Json)?;
+//     fn from_request(request: &'a Request<'r>) -> request::Outcome<Autenticated, AuthError> {
+//         let cookie = request.cookies()
+//         .get_private(USER_TOKEN_NAME);
+//         //TODO: Fix errormessage:
+//         //.ok_or(AuthError::MissingToken)
+//         //.map_err(Json)?;
 
-        let result = authenticated(&cookie);
+//         let result = authenticated(&cookie);
 
-        if result.is_ok() {
-            return Outcome::Success(Autenticated(result.id));
-        } else {
-            return Outcome::Failure((Status::BadRequest, AuthError::MissingToken));
-        }
-    }
-}
+//         if result.is_ok() {
+//             return Outcome::Success(Autenticated(result.id));
+//         } else {
+//             return Outcome::Failure((Status::BadRequest, AuthError::MissingToken));
+//         }
+//     }
+// }
 
