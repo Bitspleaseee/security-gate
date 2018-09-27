@@ -84,24 +84,21 @@ pub fn auth(mut cookies: Cookies, req: Json<AuthRequest>) -> JsonResult<AuthSucc
     .map_err(Json)
 }
 
-/*
-/// Register user.
-#[post("/register", format = "application/x-www-form-urlencoded", data = "<input>")]
-fn register(input: Form<LogIn>, remote_addr: SocketAddr) -> Json<OkResponse> {
-    if let Ok(username) = input.username {
-        // result = register(input);
-        info!("{}: sent request to register new user with username: {}", remote_addr, input.username);
-        Json(result);
-    } else {
-        let ret = OkResponse {
-            ok: false,,
-            message: ""
-        }
-        info!("{}: failed regestering new user with username: {}", remote_addr, input.username);
-        JSON(ret);
-  }
-}
 
+/*/// Register user.
+#[post("/register", format = "application/json", data = "<req>")]
+fn register(req: RegisterPayload) -> JsonResult<AuthSuccess, AuthError> { {
+    if let Ok(username) = req.username {
+        // result = auth.register(req);
+        trace!("sent request to register new user with username: {}", req.username);
+        Err(AuthError::InvalidUsername).map(Json).map_err(Json)
+    } else {
+        trace!("failed regestering new user with username: {}", req.username);
+        Err(AuthError::InvalidUsername).map(Json).map_err(Json)
+  }
+}*/
+
+/*
 /// Retrieve the user's profile.
 #[get("/user/<username>")]
 fn showUserProfile(username: Username, remote_addr: SocketAddr) -> String {
