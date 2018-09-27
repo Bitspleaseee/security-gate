@@ -22,12 +22,20 @@ use crate::content::requests::{
 };
 use crate::JsonResult;
 use rocket::http::Cookies;
+use rocket::http::RawStr;
+use rocket::response::NamedFile;
 use rocket_contrib::Json;
 use std::convert::TryInto;
+use std::io;
 
 #[get("/")]
-fn index() -> &'static str {
-    "Homepage"
+fn index() -> io::Result<NamedFile> {
+    NamedFile::open("static/index.html")
+}
+
+#[get("/static/<file>")]
+fn static_file(file: &RawStr) -> io::Result<NamedFile> {
+    NamedFile::open(format!("static/{}", file))
 }
 
 /// Search.
@@ -123,8 +131,8 @@ fn get_user<'a>(id: UserId) -> JsonResult<ThreadSuccess<'a>, GetError> {
     Err(GetError::InvalidId).map(Json).map_err(Json)
 }
 
-#[post("/category", format = "application/json", data = "<req>")]
-pub fn post_category<'a>(
+#[post("/content", format = "application/json", data = "<req>")]
+pub fn post_content<'a>(
     mut cookies: Cookies,
     req: Json<CategoryRequest>,
 ) -> JsonResult<OkSuccess<'a>, GetError> {
@@ -166,93 +174,6 @@ pub fn post_category<'a>(
     .map_err(Json)
 }
 
-#[post("/thread", format = "application/json", data = "<req>")]
-pub fn post_thread<'a>(
-    mut cookies: Cookies,
-    req: Json<ThreadRequest>,
-) -> JsonResult<OkSuccess<'a>, GetError> {
-    let cookie = cookies
-        .get_private(USER_TOKEN_NAME)
-        .ok_or(GetError::MissingToken)
-        .map_err(Json)?;
-
-    let result = authenticated(&cookie);
-    if result.is_err() {
-        Err(GetError::TokenNotCorrect).map_err(Json)?;
-    }
-
-    match *req {
-        ThreadRequest::Add(AddPayload {
-            ref raw_title,
-            ref raw_description,
-        }) => {
-            // [..] is used to turn &String into &str
-            //let title = raw_title[..].try_into().map_err(Json)?;
-            //let description = raw_description[..].try_into().map_err(Json)?;
-
-            //new_thread(title, description, result.id)      // Send title and description + user-id to controller
-            Err(GetError::InvalidId)
-        }
-        //ThreadRequest::Edit(Thread {
-        //    ref id,
-        //    ref title,
-        //    ref description,
-        //    ref category_id
-        //}) => {
-        //    //edit_thread(title, description, id)
-        //    Err(GetError::InvalidId)
-        //}
-        ThreadRequest::Hide(HideThreadPayload { ref id }) => {
-            //hide_thread(id)
-            Err(GetError::InvalidId)
-        }
-    }.map(Json)
-    .map_err(Json)
-}
-
-#[post("/comment", format = "application/json", data = "<req>")]
-pub fn post_comment<'a>(
-    mut cookies: Cookies,
-    req: Json<CommentRequest>,
-) -> JsonResult<OkSuccess<'a>, GetError> {
-    let cookie = cookies
-        .get_private(USER_TOKEN_NAME)
-        .ok_or(GetError::MissingToken)
-        .map_err(Json)?;
-
-    let result = authenticated(&cookie);
-    if result.is_err() {
-        Err(GetError::TokenNotCorrect).map_err(Json)?;
-    }
-
-    match *req {
-        CommentRequest::Add(AddPayload {
-            ref raw_title,
-            ref raw_description,
-        }) => {
-            // [..] is used to turn &String into &str
-            //let title = raw_title[..].try_into().map_err(Json)?;
-            //let description = raw_description[..].try_into().map_err(Json)?;
-
-            //new_comment(title, description, result.id)      // Send title and description + user-id to controller
-            Err(GetError::InvalidId)
-        }
-        //CommentRequest::Edit(Comment {
-        //    ref id,
-        //    ref uid,
-        //    ref content,
-        //    ref thread
-        //}) => {
-        //    //edit_comment(title, description, id)
-        //    Err(GetError::InvalidId)
-        //}
-        CommentRequest::Hide(HideCommentPayload { ref id }) => {
-            //hide_comment(id)
-            Err(GetError::InvalidId)
-        }
-    }.map(Json)
-    .map_err(Json)
-}
 
 /*
 /// Make a new category
