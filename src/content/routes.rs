@@ -16,7 +16,7 @@ use super::requests::CommentRequest;
 use super::requests::ThreadRequest;
 use super::responses::GetError;
 use super::responses::OkSuccess;
-use crate::auth::api::{authenticated, USER_TOKEN_NAME};
+use crate::auth::api::{authenticated, USER_TOKEN_NAME, Token};
 use crate::content::requests::{
     AddPayload, HideCategoryPayload, HideCommentPayload, HideThreadPayload,
 };
@@ -133,15 +133,10 @@ fn get_user<'a>(id: UserId) -> JsonResult<ThreadSuccess<'a>, GetError> {
 
 #[post("/content", format = "application/json", data = "<req>")]
 pub fn post_content<'a>(
-    mut cookies: Cookies,
+    token: Token,
     req: Json<CategoryRequest>,
 ) -> JsonResult<OkSuccess<'a>, GetError> {
-    let cookie = cookies
-        .get_private(USER_TOKEN_NAME)
-        .ok_or(GetError::MissingToken)
-        .map_err(Json)?;
-
-    let result = authenticated(&cookie);
+    let result = authenticated(token);
     if result.is_err() {
         Err(GetError::TokenNotCorrect).map_err(Json)?;
     }

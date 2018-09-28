@@ -15,6 +15,8 @@ extern crate rocket_contrib;
 #[macro_use]
 extern crate log;
 extern crate failure;
+extern crate chrono;
+extern crate env_logger;
 #[macro_use]
 extern crate failure_derive;
 extern crate serde;
@@ -24,11 +26,33 @@ extern crate serde_derive;
 mod auth;
 mod content;
 
+use rocket::fairing::AdHoc;
+use std::io::Write;
+use std::net::SocketAddr;
+use chrono::Local;
+use env_logger::Builder;
+use log::LevelFilter;
+
+
 /// Convenience wrapper around a `Result` of `Json` values
 type JsonResult<T, E> = Result<rocket_contrib::Json<T>, rocket_contrib::Json<E>>;
 
 fn main() {
     rocket::ignite()
+        .attach(AdHoc::on_request(|req, _| {
+            Builder::new()
+                .format(|buf, record| {
+                    writeln!(buf,
+                        "{} [{}] - IP {:?}: {}",
+                        Local::now().format("%Y-%m-%dT%H:%M:%S"),
+                        record.level(),
+                        req.remote(),                    // Returns an ip or None if nothing is found.
+                        record.args()
+                    )
+                })
+                .filter(None, LevelFilter::Info)
+                .init();
+        }))
         .mount("/", routes![content::routes::index])
         .mount("/", routes![content::routes::static_file])
         .mount("/api/", routes![auth::routes::auth])
