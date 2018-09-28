@@ -74,4 +74,3 @@ impl<'a> TryFrom<&'a str> for PlainPassword<'a> {
         }
     }
 }
-

@@ -4,6 +4,9 @@ use rocket::http::Cookie;
 use std::borrow::Cow;
 use std::convert::AsRef;
 use std::convert::From;
+use rocket::Outcome;
+use rocket::http::Status;
+use rocket::request::{self, Request, FromRequest};
 
 pub const USER_TOKEN_NAME: &str = "user_token";
 
@@ -45,5 +48,29 @@ impl<'a> From<&'a Cookie<'a>> for Token<'a> {
 impl<'a> Into<Cookie<'a>> for Token<'a> {
     fn into(self) -> Cookie<'a> {
         Cookie::new(USER_TOKEN_NAME, self.0.into_owned())
+    }
+}
+
+impl<'a, 'r> FromRequest<'a, 'r> for Token<'a> {
+    type Error = AuthError;
+
+    fn from_request(request: &'a Request<'r>) -> request::Outcome<Token<'a>, AuthError> {
+        let cookie = request.cookies()
+        .get_private(USER_TOKEN_NAME);
+
+        
+
+         match cookie {
+            Some(token) => {
+                // Found a token
+                info!("Getting request with token {:?}", token);
+                return Outcome::Success(Token(token.value().into()));
+            }
+            None => {
+                // Did not found any token
+                info!("Did not found any token.");
+                return Outcome::Failure((Status::BadRequest, AuthError::MissingToken));
+            }
+        }
     }
 }

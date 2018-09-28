@@ -1,10 +1,3 @@
-use rocket::Outcome;
-use rocket::http::Status;
-use rocket::http::Cookies;
-use crate::auth::api::{Token, USER_TOKEN_NAME};
-use rocket::request::{self, Request, FromRequest};
-use rocket_contrib::Json;
-
 #[derive(Serialize, Deserialize)]
 #[serde(
     tag = "type",
@@ -29,27 +22,4 @@ pub enum AuthError {
     InvalidUsername,
     #[fail(display = "invalid password")]
     InvalidPassword,
-}
-
-impl<'a, 'r> FromRequest<'a, 'r> for Token<'a> {
-    type Error = AuthError;
-
-    fn from_request(request: &'a Request<'r>) -> request::Outcome<Token<'a>, AuthError> {
-        let cookie = request.cookies()
-        .get_private(USER_TOKEN_NAME);
-
-
-         match cookie {
-            Some(token) => {
-                // Found a token
-                info!("Getting request with token {:?}", token);
-                return Outcome::Success(Token(cookie));
-            }
-            None => {
-                // Did not found any token
-                info!("Did not found any token.");
-                return Outcome::Failure((Status::BadRequest, AuthError::MissingToken));
-            }
-        }
-    }
 }
