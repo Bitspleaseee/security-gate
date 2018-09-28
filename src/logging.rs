@@ -1,7 +1,9 @@
 use std::io;
+use std::net::SocketAddr;
 
-pub fn setup_logging(verbosity: u64) -> Result<(), fern::InitError> {
+pub fn setup_logging(verbosity: u64, socket: SocketAddr) -> Result<(), fern::InitError> {
     let mut base_config = fern::Dispatch::new();
+    //let ip = socket.expect("failed to get ip-adress of user.").ip();
 
     base_config = match verbosity {
         0 => base_config.level(log::LevelFilter::Info),
@@ -13,14 +15,15 @@ pub fn setup_logging(verbosity: u64) -> Result<(), fern::InitError> {
     let file_config = fern::Dispatch::new()
         .format(|out, message, record| {
             out.finish(format_args!(
-                "{}[{}][{}] {}",
+                "{}[{}][{}][{}] {}",
                 chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
                 record.target(),
                 record.level(),
+                socket.ip(),
                 message
             ))
         })
-        .chain(fern::log_file("controller.log")?);
+        .chain(fern::log_file("security-gate.log")?);
 
     let stdout_config = fern::Dispatch::new()
         .format(|out, message, record| {

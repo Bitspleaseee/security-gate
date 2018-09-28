@@ -39,38 +39,30 @@ use log::LevelFilter;
 type JsonResult<T, E> = Result<rocket_contrib::Json<T>, rocket_contrib::Json<E>>;
 
 fn main() {
-    // Logging
-    let cmd_arguments = clap::App::new("cmd-program")
-        .arg(
-            clap::Arg::with_name("verbose")
-                .short("v")
-                .long("verbose")
-                .multiple(true)
-                .help("Increases logging verbosity each use for up to 3 times"),
-        )
-        .get_matches();
+    
 
-    let verbosity: u64 = cmd_arguments.occurrences_of("verbose");
-
-    logging::setup_logging(verbosity).expect("failed to initialize logging.");
+    
 
     info!("Starting program");
 
     rocket::ignite()
-        // .attach(AdHoc::on_request(|req, _| {
-        //     Builder::new()
-        //         .format(|buf, record| {
-        //             writeln!(buf,
-        //                 "{} [{}] - IP {:?}: {}",
-        //                 Local::now().format("%Y-%m-%dT%H:%M:%S"),
-        //                 record.level(),
-        //                 req.remote(),                    // Returns an ip or None if nothing is found.
-        //                 record.args()
-        //             )
-        //         })
-        //         .filter(None, LevelFilter::Info)
-        //         .init();
-        // }))
+        .attach(AdHoc::on_request(|req, _| {
+            // Logging
+            let cmd_arguments = clap::App::new("cmd-program")
+            .arg(
+                clap::Arg::with_name("verbose")
+                    .short("v")
+                    .long("verbose")
+                    .multiple(true)
+                    .help("Increases logging verbosity each use for up to 3 times"),
+            )
+            .get_matches();
+
+            let verbosity: u64 = cmd_arguments.occurrences_of("verbose");
+            let socket = req.remote().expect("failed to get ip-adress of user.");
+
+            logging::setup_logging(verbosity, socket).expect("failed to initialize logging.");
+        }))
         .mount("/", routes![content::routes::index])
         .mount("/", routes![content::routes::static_file])
         .mount("/api/", routes![auth::routes::auth])
@@ -84,5 +76,5 @@ fn main() {
         .mount("/api", routes![content::routes::post_content])
         .launch();
 
-        info!("Set up routes.");
+        info!("Set up routes");
 }
