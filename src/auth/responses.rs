@@ -41,15 +41,13 @@ impl<'a, 'r> FromRequest<'a, 'r> for Token<'a> {
 
          match cookie {
             Some(token) => {
-                // Get a comment
-                //let result = controller.get_comment(id);
+                // Found a token
                 info!("Getting request with token {:?}", token);
                 return Outcome::Success(Token(cookie));
             }
             None => {
-                // Get all comments
-                //let result = controller.get_all_comments();
-                trace!("Getting all threads");
+                // Did not found any token
+                info!("Did not found any token.");
                 return Outcome::Failure((Status::BadRequest, AuthError::MissingToken));
             }
         }
