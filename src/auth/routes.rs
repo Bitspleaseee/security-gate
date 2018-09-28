@@ -84,7 +84,6 @@ pub fn auth(mut cookies: Cookies, req: Json<AuthRequest>) -> JsonResult<AuthSucc
     .map_err(Json)
 }
 
-
 /*/// Register user.
 #[post("/register", format = "application/json", data = "<req>")]
 fn register(req: RegisterPayload) -> JsonResult<AuthSuccess, AuthError> { {

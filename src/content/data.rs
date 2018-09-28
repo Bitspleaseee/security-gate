@@ -1,15 +1,15 @@
+use super::responses::GetError;
+use crate::auth::requests::Username;
+use regex::Regex;
+use rocket::http::RawStr;
+use rocket::request::FromFormValue;
 use rocket::request::FromParam;
+use rocket::request::{FormItems, FromForm};
 use std::convert::TryFrom;
 use std::convert::TryInto;
 use std::fmt::{self, Display};
 use std::ops::Deref;
 use std::str::FromStr;
-use regex::Regex;
-use rocket::request::FromFormValue;
-use rocket::request::{FromForm, FormItems};
-use super::responses::GetError;
-use crate::auth::requests::Username;
-use rocket::http::RawStr;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Comment<'a> {
@@ -89,19 +89,19 @@ impl<'v> FromFormValue<'v> for QueryStr<'v> {
         // return a `&str`. Parse is used to convert between different values, e.g from str to
         // number. See [`FromStr`](https://doc.rust-lang.org/std/str/trait.FromStr.html)
         //match search.as_ref() {
-            // TODO Finished? stronger vertification (only ascii chars and limited length?). You can see how
-            // this was done for `Username` and `Password` in the `auth` module.
-            // Ok(search) if search != "" => Ok(QueryStr(search)),
-            // _ => Err(search),
+        // TODO Finished? stronger vertification (only ascii chars and limited length?). You can see how
+        // this was done for `Username` and `Password` in the `auth` module.
+        // Ok(search) if search != "" => Ok(QueryStr(search)),
+        // _ => Err(search),
 
-            lazy_static! {
-                static ref RE: Regex = Regex::new(SEARCH_REGEX).unwrap();
-            }
-            if RE.is_match(search_str) {
-                Ok(QueryStr(search_str))
-            } else {
-                Err(GetError::InvalidQuery)
-            }
+        lazy_static! {
+            static ref RE: Regex = Regex::new(SEARCH_REGEX).unwrap();
+        }
+        if RE.is_match(search_str) {
+            Ok(QueryStr(search_str))
+        } else {
+            Err(GetError::InvalidQuery)
+        }
         //}
     }
 }

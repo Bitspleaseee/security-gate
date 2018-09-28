@@ -3,20 +3,20 @@ use super::data::CategoryId;
 use super::data::Comment;
 use super::data::CommentId;
 use super::data::OptId;
+use super::data::SearchQuery;
 use super::data::Thread;
 use super::data::ThreadId;
 use super::data::UserId;
-use super::data::SearchQuery;
-use super::responses::CategorySuccess;
-use super::responses::CommentSuccess;
-use super::responses::ThreadSuccess;
-use super::responses::SearchSuccess;
 use super::requests::CategoryRequest;
 use super::requests::CommentRequest;
 use super::requests::ThreadRequest;
+use super::responses::CategorySuccess;
+use super::responses::CommentSuccess;
 use super::responses::GetError;
 use super::responses::OkSuccess;
-use crate::auth::api::{authenticated, USER_TOKEN_NAME, Token};
+use super::responses::SearchSuccess;
+use super::responses::ThreadSuccess;
+use crate::auth::api::{authenticated, Token, USER_TOKEN_NAME};
 use crate::content::requests::{
     AddPayload, HideCategoryPayload, HideCommentPayload, HideThreadPayload,
 };
@@ -42,9 +42,12 @@ fn static_file(file: &RawStr) -> io::Result<NamedFile> {
 // TODO uncomment when a valid implementation for 'FromForm' exists for 'SearchQuery'
 #[get("/search?<search_str>")]
 fn search<'a>(search_str: SearchQuery<'a>) -> JsonResult<SearchSuccess<'a>, GetError> {
-   //result = controller.search(search_str);
-   trace!("sent search request to controller. search-string: {:?}", search_str);
-   Err(GetError::InvalidId).map(Json).map_err(Json)
+    //result = controller.search(search_str);
+    trace!(
+        "sent search request to controller. search-string: {:?}",
+        search_str
+    );
+    Err(GetError::InvalidId).map(Json).map_err(Json)
 }
 
 /// Get a category (name/description), or all categories (limited).
@@ -168,5 +171,3 @@ pub fn post_content<'a>(
     }.map(Json)
     .map_err(Json)
 }
-
-

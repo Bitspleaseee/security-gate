@@ -14,67 +14,59 @@ extern crate rocket;
 extern crate rocket_contrib;
 #[macro_use]
 extern crate log;
-extern crate failure;
 extern crate chrono;
-extern crate env_logger;
+extern crate failure;
 #[macro_use]
 extern crate failure_derive;
+extern crate fern;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate clap;
 
-mod auth;
-mod content;
+pub mod auth;
+pub mod content;
 pub mod logging;
-
-use rocket::fairing::AdHoc;
-use std::io::Write;
-use chrono::Local;
-use env_logger::Builder;
-use log::LevelFilter;
-
 
 /// Convenience wrapper around a `Result` of `Json` values
 type JsonResult<T, E> = Result<rocket_contrib::Json<T>, rocket_contrib::Json<E>>;
 
 fn main() {
-    
+    // Logging
+    let cmd_arguments = clap::App::new("security-gate")
+        .arg(
+            clap::Arg::with_name("verbose")
+                .short("v")
+                .long("verbose")
+                .multiple(true)
+                .help("Increases logging verbosity each use for up to 3 times"),
+        ).get_matches();
 
-    
+    let verbosity: u64 = cmd_arguments.occurrences_of("verbose");
+    logging::setup_logging(verbosity).expect("failed to initialize logging.");
 
-    info!("Starting program");
-
+    info!("igniting rocket");
     rocket::ignite()
-        .attach(AdHoc::on_request(|req, _| {
-            // Logging
-            let cmd_arguments = clap::App::new("cmd-program")
-            .arg(
-                clap::Arg::with_name("verbose")
-                    .short("v")
-                    .long("verbose")
-                    .multiple(true)
-                    .help("Increases logging verbosity each use for up to 3 times"),
-            )
-            .get_matches();
-
-            let verbosity: u64 = cmd_arguments.occurrences_of("verbose");
-            let socket = req.remote().expect("failed to get ip-adress of user.");
-
-            logging::setup_logging(verbosity, socket).expect("failed to initialize logging.");
-        }))
-        .mount("/", routes![content::routes::index])
-        .mount("/", routes![content::routes::static_file])
-        .mount("/api/", routes![auth::routes::auth])
-        .mount("/api", routes![content::routes::search])
-        .mount("/api", routes![content::routes::get_category])
-        .mount("/api", routes![content::routes::get_thread])
-        .mount("/api", routes![content::routes::get_comment])
-        .mount("/api", routes![content::routes::get_threads_category])
-        .mount("/api", routes![content::routes::get_comments_in_thread])
-        .mount("/api", routes![content::routes::get_user])
-        .mount("/api", routes![content::routes::post_content])
-        .launch();
-
-        info!("Set up routes");
+        .attach(logging::RocketLogger)
+        .mount(
+            "/",
+            routes![content::routes::index, content::routes::static_file],
+        ).mount(
+            "/api/",
+            routes![
+                auth::routes::auth,
+                content::routes::search,
+                content::routes::get_category,
+                content::routes::get_thread,
+                content::routes::get_comment,
+                content::routes::get_threads_category,
+                content::routes::get_comments_in_thread,
+                content::routes::get_user,
+                content::routes::post_content
+            ],
+        ).launch();
+    // TODO change from `launch` to `custom` with a custom config (disable
+    // default logging? + set IP and port from environment variables)
+    //
+    // See https://api.rocket.rs/rocket/struct.Rocket.html#method.custom
 }

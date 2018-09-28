@@ -1,12 +1,12 @@
 use crate::auth::requests::{PlainPassword, Username};
 use crate::auth::responses::AuthError;
 use rocket::http::Cookie;
+use rocket::http::Status;
+use rocket::request::{self, FromRequest, Request};
+use rocket::Outcome;
 use std::borrow::Cow;
 use std::convert::AsRef;
 use std::convert::From;
-use rocket::Outcome;
-use rocket::http::Status;
-use rocket::request::{self, Request, FromRequest};
 
 pub const USER_TOKEN_NAME: &str = "user_token";
 
@@ -57,7 +57,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for Token<'a> {
     fn from_request(request: &'a Request<'r>) -> request::Outcome<Token<'a>, AuthError> {
         let cookie = request.cookies().get_private(USER_TOKEN_NAME);
 
-         match cookie {
+        match cookie {
             Some(cookie_content) => {
                 // Found a token
                 info!("Getting request with token {:?}", cookie_content);
@@ -71,4 +71,3 @@ impl<'a, 'r> FromRequest<'a, 'r> for Token<'a> {
         }
     }
 }
-

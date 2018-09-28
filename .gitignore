@@ -25,3 +25,6 @@
 
 # Environment variables
 .env
+
+# Logfiles
+*.log

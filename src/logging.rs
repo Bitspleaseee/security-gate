@@ -1,7 +1,35 @@
+use rocket::fairing::{Fairing, Info, Kind};
+use rocket::{Data, Request, Response, Rocket};
 use std::io;
-use std::net::SocketAddr;
 
-pub fn setup_logging(verbosity: u64, socket: SocketAddr) -> Result<(), fern::InitError> {
+pub struct RocketLogger;
+
+impl Fairing for RocketLogger {
+    fn info(&self) -> Info {
+        Info {
+            name: "A fairing which logs all events",
+            kind: Kind::Launch | Kind::Request | Kind::Response,
+        }
+    }
+
+    fn on_launch(&self, rocket: &Rocket) {
+        // TODO log startup information about rocket
+        info!("starting security-gate");
+    }
+
+    fn on_request(&self, req: &mut Request, _data: &Data) {
+        match req.remote() {
+            Some(addr) => info!("[{}] {} {}", addr, req.method(), req.uri()),
+            None => info!("[-.-.-.-] {} {}", req.method(), req.uri()),
+        }
+    }
+
+    fn on_response(&self, req: &Request, res: &mut Response) {
+        // TODO log all relevant information about the response
+    }
+}
+
+pub fn setup_logging(verbosity: u64) -> Result<(), fern::InitError> {
     let mut base_config = fern::Dispatch::new();
     //let ip = socket.expect("failed to get ip-adress of user.").ip();
 
@@ -15,20 +43,18 @@ pub fn setup_logging(verbosity: u64, socket: SocketAddr) -> Result<(), fern::Ini
     let file_config = fern::Dispatch::new()
         .format(|out, message, record| {
             out.finish(format_args!(
-                "{}[{}][{}][{}] {}",
+                "{}[{}][{}] {}",
                 chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
                 record.target(),
                 record.level(),
-                socket.ip(),
                 message
             ))
-        })
-        .chain(fern::log_file("security-gate.log")?);
+        }).chain(fern::log_file("security-gate.log")?);
 
     let stdout_config = fern::Dispatch::new()
         .format(|out, message, record| {
             // special format for debug messages coming from our own crate.
-            if record.level() > log::LevelFilter::Info && record.target() == "cmd_program" {
+            if record.level() > log::LevelFilter::Info && record.target() == "security-gate" {
                 out.finish(format_args!(
                     "---\nDEBUG: {}: {}\n---",
                     chrono::Local::now().format("%H:%M:%S"),
@@ -43,8 +69,7 @@ pub fn setup_logging(verbosity: u64, socket: SocketAddr) -> Result<(), fern::Ini
                     message
                 ))
             }
-        })
-        .chain(io::stdout());
+        }).chain(io::stdout());
 
     base_config
         .chain(file_config)

@@ -16,7 +16,6 @@ rocket_codegen = "0.3.16"
 serde = "1.0.79"
 serde_derive = "1.0.79"
 chrono = "0.4"
-env_logger = "0.5.13"
 clap = "2.32.0"
 
 
