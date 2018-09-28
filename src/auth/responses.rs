@@ -3,6 +3,7 @@ use rocket::http::Status;
 use rocket::http::Cookies;
 use crate::auth::api::{Token, USER_TOKEN_NAME};
 use rocket::request::{self, Request, FromRequest};
+use std::convert::Into;
 use rocket_contrib::Json;
 
 #[derive(Serialize, Deserialize)]
@@ -35,20 +36,18 @@ impl<'a, 'r> FromRequest<'a, 'r> for Token<'a> {
     type Error = AuthError;
 
     fn from_request(request: &'a Request<'r>) -> request::Outcome<Token<'a>, AuthError> {
-        let cookie = request.cookies()
-        .get_private(USER_TOKEN_NAME);
-
+        let cookie = request.cookies().get_private(USER_TOKEN_NAME);
 
          match cookie {
-            Some(token) => {
+            Some(cookie_content) => {
                 // Found a token
-                info!("Getting request with token {:?}", token);
-                return Outcome::Success(Token(cookie));
+                info!("Getting request with token {:?}", cookie_content);
+                Outcome::Success(Token::new(cookie_content.value().to_owned()))
             }
             None => {
                 // Did not found any token
                 info!("Did not found any token.");
-                return Outcome::Failure((Status::BadRequest, AuthError::MissingToken));
+                Outcome::Failure((Status::BadRequest, AuthError::MissingToken))
             }
         }
     }
