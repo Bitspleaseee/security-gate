@@ -29,6 +29,7 @@ use rocket::config::{Config, Environment};
 pub mod auth;
 pub mod content;
 pub mod logging;
+pub mod banned;
 
 /// Convenience wrapper around a `Result` of `Json` values
 type JsonResult<T, E> = Result<rocket_contrib::Json<T>, rocket_contrib::Json<E>>;
@@ -57,9 +58,10 @@ fn main() {
     //rocket::ignite()
     rocket::custom(config.expect("Could not add config."), false)
         .attach(logging::RocketLogger)
+        .attach(banned::NotBanned)
         .mount(
             "/",
-            routes![content::routes::index, content::routes::static_file],
+            routes![content::routes::index, content::routes::static_file, banned::bannedMessage],
         ).mount(
             "/api/",
             routes![

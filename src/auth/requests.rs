@@ -1,4 +1,5 @@
 use crate::auth::responses::AuthError;
+use rocket::request::{self, FromRequest, Request};
 use regex::Regex;
 use std::convert::TryFrom;
 use std::fmt::{self, Display};

@@ -34,8 +34,8 @@ fn index() -> io::Result<NamedFile> {
 }
 
 #[get("/static/<file>")]
-fn static_file(file: &RawStr) -> io::Result<NamedFile> {
-    NamedFile::open(format!("static/{}", file))
+fn static_file(file: &RawStr) -> Option<NamedFile> {
+    NamedFile::open(Path::new("static/").join(file)).ok()
 }
 
 /// Search.
