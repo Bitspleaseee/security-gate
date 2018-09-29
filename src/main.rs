@@ -24,6 +24,8 @@ extern crate serde;
 extern crate serde_derive;
 extern crate clap;
 
+use rocket::config::{Config, Environment};
+
 pub mod auth;
 pub mod content;
 pub mod logging;
@@ -45,8 +47,15 @@ fn main() {
     let verbosity: u64 = cmd_arguments.occurrences_of("verbose");
     logging::setup_logging(verbosity).expect("failed to initialize logging.");
 
+    // Configuring rocket:
+    let config = Config::build(Environment::Staging)
+        .address("1.2.3.4")
+        .port(9234)
+        .finalize();
+
     info!("igniting rocket");
-    rocket::ignite()
+    //rocket::ignite()
+    rocket::custom(config.expect("Could not add config."), false)
         .attach(logging::RocketLogger)
         .mount(
             "/",
