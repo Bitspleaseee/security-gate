@@ -51,11 +51,12 @@ fn main() {
     let config = Config::build(Environment::Staging)
         .address("localhost")
         .port(9234)
-        .finalize();
+        .finalize()
+        .expect("failed to instantiate config");
 
     info!("igniting rocket");
     //rocket::ignite()
-    rocket::custom(config.expect("Could not add config."), false)
+    rocket::custom(config, false)
         .attach(logging::RocketLogger)
         .mount(
             "/",

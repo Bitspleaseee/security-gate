@@ -15,7 +15,7 @@ impl Fairing for RocketLogger {
     fn on_launch(&self, rocket: &Rocket) {
         // TODO log startup information about rocket
         info!("starting security-gate");
-        
+
         for route in rocket.routes() {
             info!("route {} added", route);
         }
@@ -34,16 +34,11 @@ impl Fairing for RocketLogger {
         // TODO log all relevant information about the response
         match req.remote() {
             Some(addr) => {
-                match res.body_string() {
-                    Some(body) => info!("[{}] {} {}: Response; {}", addr, req.method(), req.uri(), body),
-                    None =>info!("[{}] {} {}: Response not found.", addr, req.method(), req.uri()),
-                }
+                info!("[{}] {} {}: Responding", addr, req.method(), req.uri());
             },
             None => {
-                match res.body_string() {
-                    Some(body) => info!("[-.-.-.-] {} {}: Response; {}", req.method(), req.uri(), body),
-                    None =>info!("[-.-.-.-] {} {}: Response not found.", req.method(), req.uri()),
-                }
+                info!("[-.-.-.-] {} {}: Responding", req.method(), req.uri());
+
             }
         }
     }
