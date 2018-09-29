@@ -49,7 +49,7 @@ fn main() {
 
     // Configuring rocket:
     let config = Config::build(Environment::Staging)
-        .address("1.2.3.4")
+        .address("localhost")
         .port(9234)
         .finalize();
 
