@@ -17,7 +17,7 @@ serde = "1.0.79"
 serde_derive = "1.0.79"
 chrono = "0.4"
 clap = "2.32.0"
-
+datatypes = { git = "https://github.com/Bitspleaseee/datatypes.git", branch = "master" }
 
 [dependencies.rocket_contrib]
 version = "*"

@@ -1,12 +1,26 @@
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::{Data, Request};
-use crate::auth::api::{authenticated, Token, USER_TOKEN_NAME};
+use crate::auth::api::{authenticated, Token};
 use crate::JsonResult;
 use super::content::responses::OkSuccess;
+use super::content::data::OkMessage;
 use rocket_contrib::Json;
+use datatypes::auth::requests::{BanRequest, BanUserPayload};
+use datatypes::content::responses::ContentRequestError;
+use std::collections::HashSet;
+use std::net::IpAddr;
 
 pub struct NotBanned;
 
+// Define blacklist:
+lazy_static! {
+    static ref BLACKLIST: HashSet<IpAddr> = {
+        let mut m = HashSet::new();
+        m
+    };
+}
+
+// Give banned message
 #[get("/banned")]
 fn bannedMessage() -> &'static str {
     "You are banned from this site."
@@ -16,32 +30,34 @@ fn bannedMessage() -> &'static str {
 pub fn post_admin<'a>(
     token: Token,
     req: Json<BanRequest>,
-) -> JsonResult<OkSuccess<'a>, AuthError> {
+) -> JsonResult<OkSuccess<'a>, ContentRequestError> {
     let result = authenticated(token);
     if result.is_err() {
-        Err(AuthError::TokenNotCorrect).map_err(Json)?;
+        Err(ContentRequestError::InvalidToken).map_err(Json)?;
     }
 
     match *req {
-        CategoryRequest::Add(AddPayload {
-            ref raw_title,
-            ref raw_description,
+        BanRequest::Ban(BanUserPayload {
+            ref ip,
         }) => {
-            // [..] is used to turn &String into &str
-            //let title = raw_title[..].try_into().map_err(Json)?;
-            //let description = raw_description[..].try_into().map_err(Json)?;
-
-            //new_category(title, description)
-            Err(GetError::InvalidId)
+            let ip_address = ip;
+            let success = BLACKLIST.insert(*ip_address);                  // Insert ip.
+            if success {                                          // Ip don't exist already.
+                Ok(OkSuccess::Ok(OkMessage {ok: true, message: format!("Ip {} blacklisted.", ip_address).as_str()}))
+            } else {
+                Ok(OkSuccess::Ok(OkMessage {ok: true, message: format!("Ip {} is already blacklisted.", ip_address).as_str()}))
+            }
         }
-        //CategoryRequest::Edit(Category {
-        //    ref id,
-        //    ref title,
-        //    ref description
-        //}) => {
-        //    //edit_category(title, description)
-        //    Err(GetError::InvalidId)
-        //}
+        BanRequest::Unban(BanUserPayload {
+            ref ip,
+        }) => {
+            let success = BLACKLIST.remove(ip);                  // Insert ip.
+            if success {                                          // Ip don't exist already.
+                Ok(OkSuccess::Ok(OkMessage {ok: true, message: format!("Ip {} is removed from blacklist.", ip).as_str()}))
+            } else {
+                Ok(OkSuccess::Ok(OkMessage {ok: false, message: format!("Ip {} is not in blacklist.", ip).as_str()}))
+            }
+        }
     }.map(Json)
     .map_err(Json)
 }
@@ -56,7 +72,13 @@ impl Fairing for NotBanned {
 
     fn on_request(&self, req: &mut Request, _data: &Data) {
         match req.remote() {
-            Some(addr) => info!("[{}] {} {}", addr, req.method(), req.uri()),
+            Some(addr) => {
+                if !BLACKLIST.contains(&addr.ip()) {
+                    info!("[{}] {} {}: IP not blacklisted, accepts request", addr, req.method(), req.uri());
+                } else {
+                    info!("[{}] {} {}: IP blacklisted, sent to /blocked", addr, req.method(), req.uri());
+                }
+            },
             None => info!("[-.-.-.-] {} {}", req.method(), req.uri()),
         }
     }

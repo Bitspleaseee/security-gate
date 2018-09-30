@@ -44,8 +44,8 @@ pub struct User<'a> {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct OkMessage<'a> {
-    ok: bool,
-    message: &'a str,
+    pub ok: bool,
+    pub message: &'a str,
 }
 
 // TODO: Make this function correctly

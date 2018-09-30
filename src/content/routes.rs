@@ -27,14 +27,15 @@ use rocket::response::NamedFile;
 use rocket_contrib::Json;
 use std::convert::TryInto;
 use std::io;
+use std::path::{Path, PathBuf};
 
 #[get("/")]
 fn index() -> io::Result<NamedFile> {
     NamedFile::open("static/index.html")
 }
 
-#[get("/static/<file>")]
-fn static_file(file: &RawStr) -> Option<NamedFile> {
+#[get("/static/<file..>")]
+fn static_file(file: PathBuf) -> Option<NamedFile> {
     NamedFile::open(Path::new("static/").join(file)).ok()
 }
 
