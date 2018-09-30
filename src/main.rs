@@ -59,7 +59,7 @@ fn main() {
     //rocket::ignite()
     rocket::custom(config, false)
         .attach(logging::RocketLogger)
-        .attach(banned::NotBanned)
+        .attach(banned::BanIpAddrs::default())
         .mount(
             "/",
             routes![content::routes::index, content::routes::static_file, banned::bannedMessage],
