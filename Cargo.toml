@@ -5,19 +5,15 @@ authors = ["Ole Martin Ruud <barskern@outlook.com>"]
 edition = "2018"
 
 [dependencies]
-failure = "0.1.2"
-failure_derive = "0.1.2"
 lazy_static = "1.1.0"
 log = "0.4.5"
 fern = "0.5.6"
 regex = "1"
 rocket = "0.3.16"
 rocket_codegen = "0.3.16"
-serde = "1.0.79"
-serde_derive = "1.0.79"
 chrono = "0.4"
 clap = "2.32.0"
-datatypes = { git = "https://github.com/Bitspleaseee/datatypes.git", branch = "master" }
+datatypes = { path = "../datatypes" }
 
 [dependencies.rocket_contrib]
 version = "*"

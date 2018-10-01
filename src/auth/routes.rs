@@ -1,10 +1,10 @@
 use crate::auth::api::{authenticate, deauthenticate, USER_TOKEN_NAME};
-use crate::auth::requests::{AuthPayload, AuthRequest};
-use crate::auth::responses::{AuthError, AuthSuccess};
 use crate::JsonResult;
+use datatypes::auth::requests::AuthRequest;
+use datatypes::auth::responses::AuthSuccess;
+use datatypes::error::ResponseError;
 use rocket::http::Cookies;
 use rocket_contrib::Json;
-use std::convert::TryInto;
 
 /// Authenticate or deauthenticate user
 ///
@@ -50,29 +50,18 @@ use std::convert::TryInto;
 ///
 /// The possible types are defined in [`AuthError`](../responses/enum.AuthError.html)
 #[post("/auth", format = "application/json", data = "<req>")]
-pub fn auth(mut cookies: Cookies, req: Json<AuthRequest>) -> JsonResult<AuthSuccess, AuthError> {
-    use super::requests::AuthRequest::{Authenticate, Deauthenticate};
-
+pub fn auth(mut cookies: Cookies, req: Json<AuthRequest>) -> JsonResult<AuthSuccess> {
+    use datatypes::auth::requests::AuthRequest::*;
     match *req {
-        Authenticate(AuthPayload {
-            ref raw_username,
-            ref raw_password,
-        }) => {
-            // [..] is used to turn &String into &str
-            let username = raw_username[..].try_into().map_err(Json)?;
-            let password = raw_password[..].try_into().map_err(Json)?;
-
-            authenticate(&username, &password).map(|token| {
-                cookies.add_private(token.into());
-                info!("user '{}' authenticated successfully", username);
-                AuthSuccess::Authenticated
-            })
-        }
+        Authenticate(ref p) => authenticate(p.username(), p.password()).map(|token| {
+            cookies.add_private(token.into());
+            info!("user '{}' authenticated successfully", p.username());
+            AuthSuccess::Authenticated
+        }),
         Deauthenticate(_) => {
             let cookie = cookies
                 .get_private(USER_TOKEN_NAME)
-                .ok_or(AuthError::MissingToken)
-                .map_err(Json)?;
+                .ok_or(Json(ResponseError::Unauthenticated))?;
 
             deauthenticate(&cookie).map(|_| {
                 info!("user deauthenticated successfully");
@@ -80,13 +69,14 @@ pub fn auth(mut cookies: Cookies, req: Json<AuthRequest>) -> JsonResult<AuthSucc
                 AuthSuccess::Deauthenticated
             })
         }
+        _ => unimplemented!(),
     }.map(Json)
     .map_err(Json)
 }
 
 /*/// Register user.
 #[post("/register", format = "application/json", data = "<req>")]
-fn register(req: RegisterPayload) -> JsonResult<AuthSuccess, AuthError> { {
+fn register(req: RegisterPayload) -> JsonResult<AuthSuccess> { {
     if let Ok(username) = req.username {
         // result = auth.register(req);
         trace!("sent request to register new user with username: {}", req.username);

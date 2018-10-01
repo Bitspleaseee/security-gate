@@ -1,5 +1,5 @@
-use crate::auth::requests::{PlainPassword, Username};
-use crate::auth::responses::AuthError;
+use datatypes::error::ResponseError;
+use datatypes::valid::fields::{PlainPassword, Username};
 use rocket::http::Cookie;
 use rocket::http::Status;
 use rocket::request::{self, FromRequest, Request};
@@ -13,15 +13,15 @@ pub const USER_TOKEN_NAME: &str = "user_token";
 pub fn authenticate<'a>(
     _username: &Username,
     _password: &PlainPassword,
-) -> Result<Token<'a>, AuthError> {
+) -> Result<Token<'a>, ResponseError> {
     Ok(Token::new("placeholder"))
 }
 
-pub fn deauthenticate<'a>(_token: impl Into<Token<'a>>) -> Result<(), AuthError> {
+pub fn deauthenticate<'a>(_token: impl Into<Token<'a>>) -> Result<(), ResponseError> {
     Ok(())
 }
 
-pub fn authenticated<'a>(_token: impl Into<Token<'a>>) -> Result<(), AuthError> {
+pub fn authenticated<'a>(_token: impl Into<Token<'a>>) -> Result<(), ResponseError> {
     Ok(())
 }
 
@@ -52,9 +52,9 @@ impl<'a> Into<Cookie<'a>> for Token<'a> {
 }
 
 impl<'a, 'r> FromRequest<'a, 'r> for Token<'a> {
-    type Error = AuthError;
+    type Error = ResponseError;
 
-    fn from_request(request: &'a Request<'r>) -> request::Outcome<Token<'a>, AuthError> {
+    fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, Self::Error> {
         let cookie = request.cookies().get_private(USER_TOKEN_NAME);
 
         match cookie {
@@ -66,7 +66,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for Token<'a> {
             None => {
                 // Did not found any token
                 info!("Did not found any token.");
-                Outcome::Failure((Status::BadRequest, AuthError::MissingToken))
+                Outcome::Failure((Status::BadRequest, ResponseError::Unauthenticated))
             }
         }
     }

@@ -1,99 +1,116 @@
-use rocket::fairing::{Fairing, Info, Kind};
-use rocket::{Data, Request};
 use crate::auth::api::{authenticated, Token};
 use crate::JsonResult;
-use super::content::responses::OkSuccess;
-use super::content::data::OkMessage;
+use datatypes::admin::requests::AdminRequest;
+use datatypes::admin::responses::AdminSuccess;
+use datatypes::error::ResponseError;
+use rocket::fairing::{Fairing, Info, Kind};
+use rocket::Rocket;
+use rocket::State;
+use rocket::{Data, Request};
 use rocket_contrib::Json;
-use datatypes::auth::requests::{BanRequest, BanUserPayload};
-use datatypes::content::responses::ContentRequestError;
 use std::collections::HashSet;
 use std::net::IpAddr;
-use rocket::response::Redirect;
-use rocket::State;
-use rocket::Rocket;
-use std::sync::RwLock;
 use std::sync::Arc;
-
-pub struct NotBanned;
+use std::sync::RwLock;
 
 // Define blacklist:
 #[derive(Default)]
 pub struct BanIpAddrs {
-     banned_ips: Arc<RwLock<HashSet<IpAddr>>>
+    banned_ips: Arc<RwLock<HashSet<IpAddr>>>,
 }
 
 impl Fairing for BanIpAddrs {
     fn info(&self) -> Info {
         Info {
-            name: "A fairing which check that an ip is not banned",
+            name: "ban ip-addresses",
             kind: Kind::Attach | Kind::Request,
         }
     }
 
-   fn on_attach(&self, rocket: Rocket) -> Result<Rocket, Rocket> {
+    fn on_attach(&self, rocket: Rocket) -> Result<Rocket, Rocket> {
         let banned_ips_clone = self.banned_ips.clone();
-        rocket.manage(banned_ips_clone);
-        Ok(rocket)
-   }
+        Ok(rocket.manage(banned_ips_clone))
+    }
 
-   fn on_request(&self, req: &mut Request, _data: &Data) {
-        match req.remote() {
-            Some(addr) => {
-                let ips = self.banned_ips.read().unwrap();
-                if ips.contains(&addr.ip()) {
-                    info!("[{}] {} {}: IP not blacklisted, accepts request", addr, req.method(), req.uri());
-                } else {
-                    info!("[{}] {} {}: IP blacklisted, sent to /blocked", addr, req.method(), req.uri());
-                    let redirect = Redirect::to("/blocked");
-                }
-            },
-            None => info!("[-.-.-.-] {} {}", req.method(), req.uri()),
+    fn on_request(&self, req: &mut Request, _: &Data) {
+        let addr = match req.remote() {
+            Some(addr) => addr,
+            // Ban any user where we cannot see their IP-address
+            None => {
+                info!("user without a ip-address tried to access the service");
+                req.set_uri("/banned");
+                return;
+            }
+        };
+
+        let banned_ips = match self.banned_ips.read() {
+            Ok(banned_ips) => banned_ips,
+            Err(e) => {
+                error!(
+                    "internal error occured when trying to read
+                       'banned_ips': {}",
+                    e
+                );
+                return;
+            }
+        };
+
+        if banned_ips.contains(&addr.ip()) {
+            info!(
+                "[{}] {} {}: IP banned, sent to /banned",
+                addr,
+                req.method(),
+                req.uri()
+            );
+            req.set_uri("/banned");
         }
     }
 }
 
 // Give banned message
 #[get("/banned")]
-fn bannedMessage() -> &'static str {
+fn banned_message() -> &'static str {
     "You are banned from this site."
 }
 
 #[post("/admin", format = "application/json", data = "<req>")]
-pub fn post_admin<'a>(
+pub fn post_admin(
     token: Token,
-    req: Json<BanRequest>,
-    banned_ips: State<Arc<RwLock<HashSet<IpAddr>>>>
-) -> JsonResult<OkSuccess<'a>, ContentRequestError> {
-    let result = authenticated(token);
-    if result.is_err() {
-        Err(ContentRequestError::InvalidToken).map_err(Json)?;
-    }
+    req: Json<AdminRequest>,
+    banned_ips: State<Arc<RwLock<HashSet<IpAddr>>>>,
+) -> JsonResult<AdminSuccess> {
+    authenticated(token).map_err(|_| Json(ResponseError::Unauthenticated))?;
 
     match *req {
-        BanRequest::Ban(BanUserPayload {
-            ref ip,
-        }) => {
-            let ip_address = ip;
-            let ips = banned_ips.write().unwrap();
-            let success = ips.insert(*ip_address);                // Insert ip.
-            if success {                                          // Ip don't exist already.
-                Ok(OkSuccess::Ok(OkMessage {ok: true, message: format!("Ip {} blacklisted.", ip_address).as_str()}))
+        AdminRequest::BanIp(ref p) => {
+            let mut banned_ips = banned_ips
+                .write()
+                .map_err(|_| Json(ResponseError::InternalServerError))?;
+
+            // TODO should we tell the user about this indifference?
+            // true  => IpAddr is now banned
+            // false => IpAddr is already banned
+            if banned_ips.insert(*p.ip()) {
+                info!("banned ip {}", p.ip());
             } else {
-                Ok(OkSuccess::Ok(OkMessage {ok: true, message: format!("Ip {} is already blacklisted.", ip_address).as_str()}))
+                info!("tried to ban already banned ip {}", p.ip());
             }
+            Ok(AdminSuccess::IpBanned)
         }
-        BanRequest::Unban(BanUserPayload {
-            ref ip,
-        }) => {
-            let ips = banned_ips.write().unwrap();
-            let success = ips.remove(ip);                         // Insert ip.
-            if success {                                          // Ip don't exist already.
-                Ok(OkSuccess::Ok(OkMessage {ok: true, message: format!("Ip {} is removed from blacklist.", ip).as_str()}))
+        AdminRequest::UnbanIp(ref p) => {
+            let mut banned_ips = banned_ips
+                .write()
+                .map_err(|_| Json(ResponseError::InternalServerError))?;
+
+            // TODO should we tell the user about this indifference?
+            // true  => IpAddr is now unbanned
+            // false => IpAddr is already unbanned
+            if banned_ips.remove(p.ip()) {
+                info!("unbanned ip {}", p.ip());
             } else {
-                Ok(OkSuccess::Ok(OkMessage {ok: false, message: format!("Ip {} is not in blacklist.", ip).as_str()}))
+                info!("tried to unban already unbanned ip {}", p.ip());
             }
+            Ok(AdminSuccess::IpUnbanned)
         }
     }.map(Json)
-    .map_err(Json)
 }

@@ -1,13 +1,14 @@
 #![feature(plugin)]
 #![feature(try_from)]
-#![plugin(rocket_codegen)]
 #![feature(custom_derive)]
-// These clippy lints are unreasonable, hence they are disabled
 #![feature(tool_lints)]
-#![allow(clippy::suspicious_else_formatting)]
-#![allow(clippy::needless_pass_by_value)]
+#![plugin(rocket_codegen)]
+#![allow(
+    clippy::suspicious_else_formatting,
+    clippy::needless_pass_by_value,
+    clippy::implicit_hasher
+)]
 
-#[macro_use]
 extern crate lazy_static;
 extern crate regex;
 extern crate rocket;
@@ -15,24 +16,19 @@ extern crate rocket_contrib;
 #[macro_use]
 extern crate log;
 extern crate chrono;
-extern crate failure;
-#[macro_use]
-extern crate failure_derive;
-extern crate fern;
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
 extern crate clap;
+extern crate fern;
 
 use rocket::config::{Config, Environment};
 
 pub mod auth;
+pub mod banned;
 pub mod content;
 pub mod logging;
-pub mod banned;
 
 /// Convenience wrapper around a `Result` of `Json` values
-type JsonResult<T, E> = Result<rocket_contrib::Json<T>, rocket_contrib::Json<E>>;
+type JsonResult<T> =
+    Result<rocket_contrib::Json<T>, rocket_contrib::Json<datatypes::error::ResponseError>>;
 
 fn main() {
     // Logging
@@ -56,29 +52,25 @@ fn main() {
         .expect("failed to instantiate config");
 
     info!("igniting rocket");
-    //rocket::ignite()
     rocket::custom(config, false)
         .attach(logging::RocketLogger)
         .attach(banned::BanIpAddrs::default())
         .mount(
             "/",
-            routes![content::routes::index, content::routes::static_file, banned::bannedMessage],
+            routes![content::index, content::static_file, banned::banned_message],
         ).mount(
             "/api/",
             routes![
+                banned::post_admin,
                 auth::routes::auth,
-                content::routes::search,
-                content::routes::get_category,
-                content::routes::get_thread,
-                content::routes::get_comment,
-                content::routes::get_threads_category,
-                content::routes::get_comments_in_thread,
-                content::routes::get_user,
-                content::routes::post_content
+                content::search,
+                content::get_category,
+                content::get_thread,
+                content::get_comment,
+                content::get_threads_category,
+                content::get_comments_in_thread,
+                content::get_user,
+                content::post_content
             ],
         ).launch();
-    // TODO change from `launch` to `custom` with a custom config (disable
-    // default logging? + set IP and port from environment variables)
-    //
-    // See https://api.rocket.rs/rocket/struct.Rocket.html#method.custom
 }

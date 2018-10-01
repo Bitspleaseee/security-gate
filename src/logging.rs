@@ -7,7 +7,7 @@ pub struct RocketLogger;
 impl Fairing for RocketLogger {
     fn info(&self) -> Info {
         Info {
-            name: "A fairing which logs all events",
+            name: "logger",
             kind: Kind::Launch | Kind::Request | Kind::Response,
         }
     }
@@ -23,22 +23,21 @@ impl Fairing for RocketLogger {
         info!("Rocket launch config: {:?}", rocket.config());
     }
 
-    fn on_request(&self, req: &mut Request, _data: &Data) {
+    fn on_request(&self, req: &mut Request, _: &Data) {
         match req.remote() {
             Some(addr) => info!("[{}] {} {}", addr, req.method(), req.uri()),
             None => info!("[-.-.-.-] {} {}", req.method(), req.uri()),
         }
     }
 
-    fn on_response(&self, req: &Request, res: &mut Response) {
+    fn on_response(&self, req: &Request, _: &mut Response) {
         // TODO log all relevant information about the response
         match req.remote() {
             Some(addr) => {
                 info!("[{}] {} {}: Responding", addr, req.method(), req.uri());
-            },
+            }
             None => {
                 info!("[-.-.-.-] {} {}: Responding", req.method(), req.uri());
-
             }
         }
     }
