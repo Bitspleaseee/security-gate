@@ -13,7 +13,7 @@ rocket = "0.3.16"
 rocket_codegen = "0.3.16"
 chrono = "0.4"
 clap = "2.32.0"
-datatypes = { path = "../datatypes" }
+datatypes = { git = "https://github.com/Bitspleaseee/datatypes.git" }
 
 [dependencies.rocket_contrib]
 version = "*"
