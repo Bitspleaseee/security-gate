@@ -361,7 +361,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResult<Conte
             //edit_category(id, title, description)
             //Err(ContentError::InvalidId)
         }
-        HideCategory(ref p) => {
+        /*HideCategory(ref p) => {
             // Relays what is sent back to the user
             // TODO must be changed, added for testing
             let id = p.id().clone();
@@ -380,7 +380,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResult<Conte
             let title = p.title().clone();
             let description = p.description().clone();
 
-            let payload = ThreadPayload::new(1, title, description);
+            let payload = CategoryPayload::new(1, title, description);
             Ok(ContentSuccess::Category(payload))
             //new_thread(title, description)
             //Err(ContentError::InvalidId)
@@ -456,7 +456,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResult<Conte
             Ok(ContentSuccess::Category(payload))
             //upload_avatar(id, title, description)
             //Err(ContentError::InvalidId)
-        }
+        }*/
         _ => unimplemented!(),
     }.map_err(ResponseError::from)
     .map(Json)
