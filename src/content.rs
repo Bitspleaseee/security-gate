@@ -349,7 +349,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResult<Conte
             //new_category(title, description)
             //Err(ContentError::InvalidId)
         }
-        EditCategory(ref p) => {
+        /*EditCategory(ref p) => {
             // Relays what is sent back to the user
             // TODO must be changed, added for testing
             ////let id = p.id().clone();
