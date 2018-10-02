@@ -332,7 +332,6 @@ fn get_user(id: UserId) -> JsonResult<ContentSuccess> {
 pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResult<ContentSuccess> {
     use datatypes::content::requests::ContentRequest::*;
     use datatypes::content::responses::CategoryPayload;
-    use datatypes::content::responses::ContentError;
 
     // Ask auth-module if user can do this (is logged in and has correct role):
     authenticated(token).map_err(|_| Json(ResponseError::Unauthenticated))?;
@@ -458,7 +457,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResult<Conte
             //Err(ContentError::InvalidId)
         }*/
         _ => unimplemented!(),
-    }.map_err(ResponseError::from)
+    }
     .map(Json)
     .map_err(Json)
 }
