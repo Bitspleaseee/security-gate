@@ -461,4 +461,4 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResult<Conte
     }.map_err(ResponseError::from)
     .map(Json)
     .map_err(Json)
-}
+}*/
