@@ -360,7 +360,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResult<Conte
             Ok(ContentSuccess::Category(payload))
             //edit_category(id, title, description)
             //Err(ContentError::InvalidId)
-        }
+        }*/
         /*HideCategory(ref p) => {
             // Relays what is sent back to the user
             // TODO must be changed, added for testing
@@ -461,4 +461,4 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResult<Conte
     }.map_err(ResponseError::from)
     .map(Json)
     .map_err(Json)
-}*/
+}
