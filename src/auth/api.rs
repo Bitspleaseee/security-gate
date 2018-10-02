@@ -1,5 +1,6 @@
 use datatypes::error::ResponseError;
-use datatypes::valid::fields::{PlainPassword, Username};
+use datatypes::auth::responses::AuthSuccess;
+use datatypes::valid::fields::{PlainPassword, Username, Email};
 use rocket::http::Cookie;
 use rocket::http::Status;
 use rocket::request::{self, FromRequest, Request};
@@ -15,6 +16,14 @@ pub fn authenticate<'a>(
     _password: &PlainPassword,
 ) -> Result<Token<'a>, ResponseError> {
     Ok(Token::new("placeholder"))
+}
+
+pub fn register<'a>(
+    _username: &Username,
+    _password: &PlainPassword,
+    _email: &Email,
+) -> Result<AuthSuccess, ResponseError> {
+    Ok(AuthSuccess::UserRegistered)
 }
 
 pub fn deauthenticate<'a>(_token: impl Into<Token<'a>>) -> Result<(), ResponseError> {
