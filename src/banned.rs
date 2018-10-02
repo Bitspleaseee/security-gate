@@ -1,3 +1,5 @@
+//! The code to ban, unban and check if ip is banned.
+
 use crate::auth::api::{authenticated, Token};
 use crate::JsonResult;
 use datatypes::admin::requests::AdminRequest;
@@ -19,6 +21,7 @@ pub struct BanIpAddrs {
     banned_ips: Arc<RwLock<HashSet<IpAddr>>>,
 }
 
+// Be sure blacklist is added "globally" (on_attach) and is checked on every response (on_request).
 impl Fairing for BanIpAddrs {
     fn info(&self) -> Info {
         Info {
@@ -27,11 +30,13 @@ impl Fairing for BanIpAddrs {
         }
     }
 
+    // Add blacklist "globally" availible.
     fn on_attach(&self, rocket: Rocket) -> Result<Rocket, Rocket> {
         let banned_ips_clone = self.banned_ips.clone();
         Ok(rocket.manage(banned_ips_clone))
     }
 
+    // Check client ip against blacklist.
     fn on_request(&self, req: &mut Request, _: &Data) {
         let addr = match req.remote() {
             Some(addr) => addr,
@@ -62,17 +67,47 @@ impl Fairing for BanIpAddrs {
                 req.method(),
                 req.uri()
             );
-            req.set_uri("/banned");
+            req.set_uri("/banned");         // If banned, redirect to banned-page.
         }
     }
 }
 
-// Give banned message
+/// Give banned message
 #[get("/banned")]
 fn banned_message() -> &'static str {
     "You are banned from this site."
 }
 
+
+/// Ban or unban users.
+///
+/// If you are admin, you can ban or unban users.
+/// Types you can send in: 'BAN', 'UNBAN'.
+/// Types I can get back: 'IPBANNED', 'IPUNBANNED'.
+/// 
+/// # Example
+///
+/// Send this json to 'api/admin' (need to first log in as admin).
+/// 
+///´´´json
+///{
+///  "type": "BAN"
+///  "payload": {
+///      "ip": 195.168.1.2
+///  }
+///}
+/// ´´´
+/// 
+/// Result:
+///
+///´´´json
+///{
+///  "type": "IPBANNED",
+///  "payload": {
+///      "ip": 195.168.1.2
+///  }
+///}
+/// ´´´
 #[post("/admin", format = "application/json", data = "<req>")]
 pub fn post_admin(
     token: Token,

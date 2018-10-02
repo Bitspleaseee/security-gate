@@ -13,6 +13,8 @@ rocket = "0.3.16"
 rocket_codegen = "0.3.16"
 chrono = "0.4"
 clap = "2.32.0"
+tarpc = "0.12.0"
+tarpc-plugins = "0.4.0"
 datatypes = { git = "https://github.com/Bitspleaseee/datatypes.git" }
 
 [dependencies.rocket_contrib]

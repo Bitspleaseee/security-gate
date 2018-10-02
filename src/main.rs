@@ -63,6 +63,7 @@ fn main() {
             routes![
                 banned::post_admin,
                 auth::routes::auth,
+                auth::routes::register,
                 content::search,
                 content::get_category,
                 content::get_thread,
