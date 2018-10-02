@@ -345,7 +345,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResult<Conte
             let description = p.description().clone();
 
             let payload = CategoryPayload::new(1, title, description);
-            Ok(ContentSuccess::Category(payload))
+            ContentSuccess::Category(payload)
             //new_category(title, description)
             //Err(ContentError::InvalidId)
         }
