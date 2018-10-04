@@ -84,11 +84,11 @@ fn banned_message() -> &'static str {
 /// If you are admin, you can ban or unban users.
 /// Types you can send in: 'BAN', 'UNBAN'.
 /// Types I can get back: 'IPBANNED', 'IPUNBANNED'.
-/// 
+///
 /// # Example
 ///
 /// Send this json to 'api/admin' (need to first log in as admin).
-/// 
+///
 ///´´´json
 ///{
 ///  "type": "BAN"
@@ -97,7 +97,7 @@ fn banned_message() -> &'static str {
 ///  }
 ///}
 /// ´´´
-/// 
+///
 /// Result:
 ///
 ///´´´json
@@ -125,10 +125,10 @@ pub fn post_admin(
             // TODO should we tell the user about this indifference?
             // true  => IpAddr is now banned
             // false => IpAddr is already banned
-            if banned_ips.insert(*p.ip()) {
-                info!("banned ip {}", p.ip());
+            if banned_ips.insert(p.ip) {
+                info!("banned ip {}", p.ip);
             } else {
-                info!("tried to ban already banned ip {}", p.ip());
+                info!("tried to ban already banned ip {}", p.ip);
             }
             Ok(AdminSuccess::IpBanned)
         }
@@ -140,10 +140,10 @@ pub fn post_admin(
             // TODO should we tell the user about this indifference?
             // true  => IpAddr is now unbanned
             // false => IpAddr is already unbanned
-            if banned_ips.remove(p.ip()) {
-                info!("unbanned ip {}", p.ip());
+            if banned_ips.remove(&p.ip) {
+                info!("unbanned ip {}", p.ip);
             } else {
-                info!("tried to unban already unbanned ip {}", p.ip());
+                info!("tried to unban already unbanned ip {}", p.ip);
             }
             Ok(AdminSuccess::IpUnbanned)
         }

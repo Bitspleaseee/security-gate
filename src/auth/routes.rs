@@ -1,7 +1,7 @@
 use crate::auth::api::{authenticate, register, deauthenticate, USER_TOKEN_NAME};
 use crate::JsonResult;
-use datatypes::auth::requests::{AuthRequest};
-use datatypes::auth::responses::{AuthSuccess, AuthError};
+use datatypes::auth::requests::AuthRequest;
+use datatypes::auth::responses::AuthSuccess;
 use datatypes::error::ResponseError;
 use rocket::http::Cookies;
 use rocket_contrib::Json;
@@ -53,9 +53,9 @@ use rocket_contrib::Json;
 pub fn auth(mut cookies: Cookies, req: Json<AuthRequest>) -> JsonResult<AuthSuccess> {
     use datatypes::auth::requests::AuthRequest::*;
     match *req {
-        Authenticate(ref p) => authenticate(p.username(), p.password()).map(|token| {
+        Authenticate(ref p) => authenticate(&p.username, &p.password).map(|token| {
             cookies.add_private(token.into());
-            info!("user '{}' authenticated successfully", p.username());
+            info!("user '{}' authenticated successfully", &p.username);
             AuthSuccess::Authenticated
         }),
         Deauthenticate(_) => {
@@ -69,8 +69,8 @@ pub fn auth(mut cookies: Cookies, req: Json<AuthRequest>) -> JsonResult<AuthSucc
                 AuthSuccess::Deauthenticated
             })
         },
-        RegisterUser(ref p) => register(p.username(), p.password(), p.email()).map(|token| {
-            info!("user '{}' authenticated successfully", p.username());
+        RegisterUser(ref p) => register(&p.username, &p.password, &p.email).map(|token| {
+            info!("user '{}' authenticated successfully", &p.username);
             AuthSuccess::UserRegistered
         }),
         _ => unimplemented!(),

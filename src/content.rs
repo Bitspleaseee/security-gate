@@ -13,7 +13,7 @@ use datatypes::valid::fields::*;
 use datatypes::valid::ids::*;
 
 /// Get the main webpage.
-/// 
+///
 /// This function returns the content of the webpage as html/css/javascript.
 #[get("/")]
 fn index() -> Option<NamedFile> {
@@ -21,7 +21,7 @@ fn index() -> Option<NamedFile> {
 }
 
 /// Get the other webpages.
-/// 
+///
 /// This function returns the content of the webpage given in file as html/css/javascript.
 #[get("/static/<file..>")]
 fn static_file(file: PathBuf) -> Option<NamedFile> {
@@ -29,15 +29,15 @@ fn static_file(file: PathBuf) -> Option<NamedFile> {
 }
 
 /// Search after some content.
-/// 
+///
 /// # Example
-/// 
+///
 /// ## Query
-/// 
+///
 /// ´´´text
 /// localhost:9000/api/search?q=hello%20world
 /// ´´´
-/// 
+///
 /// ## Result
 /// ´´´json
 /// {
@@ -91,22 +91,22 @@ pub struct SearchForm {
 
 impl Into<SearchPayload> for SearchForm {
     fn into(self) -> SearchPayload {
-        SearchPayload::new(self.q)
+        SearchPayload { query: self.q }
     }
 }
 
 /// Get a category (name/description), or all categories (limited).
-/// 
+///
 /// If you don't give an id, all categories will be returned.
-/// 
+///
 /// # Example
-/// 
+///
 /// ## Query
-/// 
+///
 /// ´´´text
 /// localhost:9000/api/category/3
 /// ´´´
-/// 
+///
 /// ## Result
 /// ´´´json
 /// {
@@ -154,15 +154,15 @@ fn get_threads_category(id: CategoryId) -> JsonResult<ContentSuccess> {
 /// Get a thread (name/description), or all categories (limited).
 ///
 /// If you don't give an id, all threads will be returned.
-/// 
+///
 /// # Example
-/// 
+///
 /// ## Query
-/// 
+///
 /// ´´´text
 /// localhost:9000/api/thread/6
 /// ´´´
-/// 
+///
 /// ## Result
 /// ´´´json
 /// {
@@ -210,15 +210,15 @@ fn get_comments_in_thread(id: ThreadId) -> JsonResult<ContentSuccess> {
 /// Get a comment or all comments (limited).
 ///
 /// If you don't give an id, all comments will be returned.
-/// 
+///
 /// # Example
-/// 
+///
 /// ## Query
-/// 
+///
 /// ´´´text
 /// localhost:9000/api/comment/98
 /// ´´´
-/// 
+///
 /// ## Result
 /// ´´´json
 /// {
@@ -253,15 +253,15 @@ fn get_comment(opt_id: OptId<CommentId>) -> JsonResult<ContentSuccess> {
 }
 
 /// Get user info by id.
-/// 
+///
 /// # Example
-/// 
+///
 /// ## Query
-/// 
+///
 /// ´´´text
 /// localhost:9000/api/user/22
 /// ´´´
-/// 
+///
 /// ## Result
 /// ´´´json
 /// {
@@ -273,7 +273,7 @@ fn get_comment(opt_id: OptId<CommentId>) -> JsonResult<ContentSuccess> {
 ///         "description": "Hello Everyone. I like programming",
 ///         "avatar": "pictures/FT45.png"
 ///         }
-/// } 
+/// }
 #[get("/user/<id>")]
 fn get_user(id: UserId) -> JsonResult<ContentSuccess> {
     trace!("Getting user with id {:?}", id);
@@ -293,13 +293,13 @@ fn get_user(id: UserId) -> JsonResult<ContentSuccess> {
 /// 'ADDTHREAD', 'EDITTHREAD', 'HIDETREAD',
 /// 'ADDCOMMENT', 'EDITCOMMENT', 'HIDECOMMENT',
 /// 'UPLOADAVATAR'.
-/// 
+///
 /// Types I can get back: 'CATEGORY', 'THREAD', 'COMMENT'.
-/// 
+///
 /// # Example
 ///
 /// Send this json to 'api/content' (need to first be logged in)
-/// 
+///
 ///´´´json
 ///{
 ///  "type": "ADDCOMMENT"
@@ -312,7 +312,7 @@ fn get_user(id: UserId) -> JsonResult<ContentSuccess> {
 ///  }
 ///}
 /// ´´´
-/// 
+///
 /// Result:
 ///
 ///´´´json
@@ -340,13 +340,12 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResult<Conte
         AddCategory(ref p) => {
             // Relays what is sent back to the user
             // TODO must be changed, added for testing
-            let title = p.title().clone();
-            let description = p.description().clone();
+            let title = p.title.clone();
+            let description = p.description.clone();
 
-            let payload = CategoryPayload::new(1, title, description);
-            Ok(ContentSuccess::Category(payload))
             //new_category(title, description)
-            //Err(ContentError::InvalidId)
+            Err(ContentError::InvalidId)
+                .map_err(ResponseError::from)
         }
         /*EditCategory(ref p) => {
             // Relays what is sent back to the user

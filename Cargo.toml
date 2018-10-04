@@ -15,6 +15,8 @@ chrono = "0.4"
 clap = "2.32.0"
 tarpc = { git = "https://github.com/google/tarpc.git", branch = "master" }
 tarpc-plugins = { git = "https://github.com/google/tarpc", rev = "5e4b97e" }
+serde = "1.0"
+serde_derive = "1.0"
 datatypes = { git = "https://github.com/Bitspleaseee/datatypes.git" }
 
 [dependencies.rocket_contrib]
