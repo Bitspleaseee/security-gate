@@ -2,6 +2,7 @@
 use rocket::response::NamedFile;
 use rocket_contrib::Json;
 use std::path::{Path, PathBuf};
+use tarpc::sync::client::{Options, ClientExt};
 
 use crate::auth::api::{authenticated, Token};
 use crate::JsonResult;
@@ -11,6 +12,8 @@ use datatypes::content::responses::{ContentError, ContentSuccess};
 use datatypes::error::ResponseError;
 use datatypes::valid::fields::*;
 use datatypes::valid::ids::*;
+
+use crate::comms::controller;
 
 /// Get the main webpage.
 ///
@@ -343,6 +346,14 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResult<Conte
             let title = p.title.clone();
             let description = p.description.clone();
 
+            let con =
+                controller::SyncClient::connect("localhost:1000", Options::default())
+                .map_err(|e| {
+                    error!("error connecting to controller: {}", e);
+                    Json(ResponseError::InternalServerError)
+                })?;
+
+            // con.content_request(p)
             //new_category(title, description)
             Err(ContentError::InvalidId)
                 .map_err(ResponseError::from)

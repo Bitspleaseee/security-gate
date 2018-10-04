@@ -3,6 +3,7 @@
 #![feature(custom_derive)]
 #![feature(tool_lints)]
 #![plugin(rocket_codegen)]
+#![plugin(tarpc_plugins)]
 #![allow(
     clippy::suspicious_else_formatting,
     clippy::needless_pass_by_value,
@@ -18,9 +19,10 @@ extern crate log;
 extern crate chrono;
 extern crate clap;
 extern crate fern;
+#[macro_use]
+extern crate tarpc;
 
 use rocket::config::{Config, Environment};
-use rocket::fairing::AdHoc;
 use rocket::http::Header;
 use rocket::{Request, Response};
 use rocket::fairing::{Fairing, Info, Kind};
@@ -29,6 +31,7 @@ pub mod auth;
 pub mod banned;
 pub mod content;
 pub mod logging;
+pub mod comms;
 
 /// Convenience wrapper around a `Result` of `Json` values
 type JsonResult<T> =
