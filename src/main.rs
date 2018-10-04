@@ -20,6 +20,10 @@ extern crate clap;
 extern crate fern;
 
 use rocket::config::{Config, Environment};
+use rocket::fairing::AdHoc;
+use rocket::http::Header;
+use rocket::{Request, Response};
+use rocket::fairing::{Fairing, Info, Kind};
 
 pub mod auth;
 pub mod banned;
@@ -55,6 +59,7 @@ fn main() {
     rocket::custom(config, false)
         .attach(logging::RocketLogger)
         .attach(banned::BanIpAddrs::default())
+        .attach(ModifyResponseHeaders)
         .mount(
             "/",
             routes![content::index, content::static_file, banned::banned_message],
@@ -74,3 +79,23 @@ fn main() {
             ],
         ).launch();
 }
+
+pub struct ModifyResponseHeaders;
+
+impl Fairing for ModifyResponseHeaders {
+    fn info(&self) -> Info {
+        Info {
+            name: "alter generic headers (e.g. CSP header)",
+            kind: Kind::Response
+        }
+    }
+    fn on_response(&self, _: &Request, res: &mut Response) {
+        res.set_header(
+            Header::new(
+                "Content-Security-Policy",
+                "default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self';"
+            )
+        );
+    }
+}
+
