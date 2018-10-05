@@ -327,7 +327,7 @@ fn get_comments_in_thread(id: ThreadId) -> JsonResponseResult<ContentSuccess> {
     match con.get_comments(comments_payload)
          {
             Ok(v) => {
-                trace!("Gotten back all comments in thread with id from controller.", id);
+                trace!("Gotten back all comments in thread with id from controller.");
                 Ok(ContentSuccess::Comments(v))
             },
             Err(e) => {
@@ -532,7 +532,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
     match *req {
         AddCategory(ref p) => {
             // Relays what is sent back to the user
-            match con.add_category(p) {
+            match con.add_category(*p) {
                 Ok(v) => {
                     trace!("Added new category with title: {}", p.title.clone());
                     Ok(ContentSuccess::Category(v))
@@ -545,7 +545,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
         }
         EditCategory(ref p) => {
             // Relays what is sent back to the user
-            match con.edit_category(p) {
+            match con.edit_category(*p) {
                 Ok(v) => {
                     trace!("Edited category with id: {}", p.id.clone());
                     Ok(ContentSuccess::Category(v))
@@ -558,7 +558,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
         }
         HideCategory(ref p) => {
             // Relays what is sent back to the user
-            match con.hide_category(p) {
+            match con.hide_category(*p) {
                 Ok(v) => {
                     trace!("Hided category with id: {}", p.id.clone());
                     Ok(ContentSuccess::Category(v))
@@ -571,7 +571,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
         }
         AddThread(ref p) => {
             // Relays what is sent back to the user
-            match con.add_thread(p) {
+            match con.add_thread(*p) {
                 Ok(v) => {
                     trace!("Added new thread with title: {}", p.title.clone());
                     Ok(ContentSuccess::Thread(v))
@@ -584,7 +584,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
         }
         EditThread(ref p) => {
             // Relays what is sent back to the user
-            match con.edit_thread(p) {
+            match con.edit_thread(*p) {
                 Ok(v) => {
                     trace!("Edited thread with id: {}", p.id.clone());
                     Ok(ContentSuccess::Thread(v))
@@ -597,7 +597,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
         }
         HideThread(ref p) => {
             // Relays what is sent back to the user
-            match con.hide_thread(p) {
+            match con.hide_thread(*p) {
                 Ok(v) => {
                     trace!("Hided thread with id: {}", p.id.clone());
                     Ok(ContentSuccess::Thread(v))
@@ -610,7 +610,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
         }
         AddComment(ref p) => {
             // Relays what is sent back to the user
-            match con.add_comment(p) {
+            match con.add_comment(*p) {
                 Ok(v) => {
                     trace!("Added new comment with title: {}", p.title.clone());
                     Ok(ContentSuccess::Comment(v))
@@ -623,7 +623,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
         }
         EditComment(ref p) => {
             // Relays what is sent back to the user
-            match con.edit_comment(p) {
+            match con.edit_comment(*p) {
                 Ok(v) => {
                     trace!("Edited comment with id: {}", p.id.clone());
                     Ok(ContentSuccess::Comment(v))
@@ -636,7 +636,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
         }
         HideComment(ref p) => {
             // Relays what is sent back to the user
-            match con.hide_comment(p) {
+            match con.hide_comment(*p) {
                 Ok(v) => {
                     trace!("Hided comment with id: {}", p.id.clone());
                     Ok(ContentSuccess::Category(v))
@@ -649,7 +649,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
         }
         UploadAvatar(ref p) => {
             // Relays what is sent back to the user
-            match con.upload_avatar(p) {
+            match con.upload_avatar(*p) {
                 Ok(v) => {
                     trace!("Uploaded avatar");
                     Ok(ContentSuccess::Avatar(v))
