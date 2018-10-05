@@ -5,15 +5,16 @@ use std::path::{Path, PathBuf};
 use tarpc::sync::client::{Options, ClientExt};
 
 use crate::auth::api::{authenticated, Token};
-use crate::JsonResult;
+use crate::JsonResponseResult;
 
-use datatypes::content::requests::{ContentRequest, SearchPayload};
-use datatypes::content::responses::{ContentError, ContentSuccess};
-use datatypes::error::ResponseError;
+use datatypes::content::requests::*;
+use datatypes::content::responses::*;
+use datatypes::error::{ResponseError, ResponseResult};
 use datatypes::valid::fields::*;
 use datatypes::valid::ids::*;
 
 use crate::comms::controller;
+use crate::comms::controller::CONTENT_IP;
 
 /// Get the main webpage.
 ///
@@ -73,17 +74,35 @@ fn static_file(file: PathBuf) -> Option<NamedFile> {
 /// }
 /// ´´´
 #[get("/search?<search_form>")]
-fn search(search_form: SearchForm) -> JsonResult<ContentSuccess> {
-    let search_request: ContentRequest = ContentRequest::Search(search_form.into());
-    //result = controller.search(search_request);
+fn search(search_form: SearchForm) -> JsonResponseResult<ContentSuccess> {
+    let search_request: SearchPayload = SearchPayload {
+        query: search_form.q
+    };
     trace!(
-        "sent search request to controller. search-string: {:?}",
-        search_request
+        "Sending search request to controller. search-string: {:?}",
+        search_request.query
     );
-    Err(ContentError::InvalidId)
-        .map_err(ResponseError::from)
-        .map(Json)
-        .map_err(Json)
+    
+    let con =
+        controller::SyncClient::connect(CONTENT_IP, Options::default())
+        .map_err(|e| {
+            error!("error connecting to controller: {}", e);
+            Json(ResponseError::InternalServerError)
+        })?;
+
+    match con.search(search_request) {
+        Ok(v) => {
+            trace!("Gotten back search info for query {:?} from controller.", search_request.query);
+            Ok(ContentSuccess::SearchResult(v.and_then(v))
+        },
+        Err(e) => {
+            error!("Error when getting user from controller: {}", e);
+            Err(ResponseError::InternalServerError)
+        }
+    }
+    .map_err(ResponseError::from)
+    .map(Json)
+    .map_err(Json)
 }
 
 /// A search form used to make all searches done in the URL
@@ -124,19 +143,51 @@ impl Into<SearchPayload> for SearchForm {
 /// }
 /// ´´´
 #[get("/category/<opt_id>")]
-fn get_category(opt_id: OptId<CategoryId>) -> JsonResult<ContentSuccess> {
+fn get_category(opt_id: OptId<CategoryId>) -> JsonResponseResult<ContentSuccess> {
+    let con =
+        controller::SyncClient::connect(CONTENT_IP, Options::default())
+        .map_err(|e| {
+            error!("error connecting to controller: {}", e);
+            Json(ResponseError::InternalServerError)
+        })?;
+
     match *opt_id {
-        Some(id) => {
+        Some(raw_id) => {
             // Get a category
             //let result = controller.get_category(id);
-            trace!("Getting category with id {:?}", id);
-            Err(ContentError::InvalidId)
+            trace!("Getting category with id {:?}", raw_id);
+            
+            let category_payload: GetCategoryPayload = GetCategoryPayload {
+                id: raw_id
+            };
+            match con.get_category(category_payload) {
+                Ok(v) => {
+                    trace!("Gotten back category with id {:?} from controller.", raw_id);
+                    Ok(ContentSuccess::Category(v))
+                },
+                Err(e) => {
+                    error!("Error when getting category from controller: {}", e);
+                    Err(ResponseError::InternalServerError)
+                }
+            }
         }
         None => {
             // Get all categories
             //let result = controller.get_all_category();
+            let also_hidden: GetCategoriesPayload = GetCategoriesPayload {
+                include_hidden: false,
+            };
             trace!("Getting all categories");
-            Err(ContentError::InvalidId)
+            match con.get_categories(also_hidden) {
+                Ok(v) => {
+                    trace!("Gotten back all categories from controller. Also hidden: {:?}", also_hidden.include_hidden);
+                    Ok(ContentSuccess::Categories(v))
+                },
+                Err(e) => {
+                    error!("Error when getting category from controller: {}", e);
+                    Err(ResponseError::InternalServerError)
+                }
+            }
         }
     }.map_err(ResponseError::from)
     .map(Json)
@@ -145,13 +196,29 @@ fn get_category(opt_id: OptId<CategoryId>) -> JsonResult<ContentSuccess> {
 
 /// Get a categories threads.
 #[get("/category/<id>/threads")]
-fn get_threads_category(id: CategoryId) -> JsonResult<ContentSuccess> {
+fn get_threads_category(id: CategoryId) -> JsonResponseResult<ContentSuccess> {
     trace!("Getting all threads from category with id {:?}", id);
-    //let result = controller.get_threads_in_category(id).map(Json).map_err(Json)
-    Err(ContentError::InvalidId)
-        .map_err(ResponseError::from)
-        .map(Json)
-        .map_err(Json)
+    let category_payload: GetThreadsPayload = GetThreadsPayload {
+        id: id
+    };
+
+    let con =
+        controller::SyncClient::connect(CONTENT_IP, Options::default())
+        .map_err(|e| {
+            error!("error connecting to controller: {}", e);
+            Json(ResponseError::InternalServerError)
+        })?;
+
+    match con.get_threads(category_payload) {
+        Ok(v) => {
+            trace!("Gotten back category with id {:?} from controller.", id);
+            Ok(v)
+        },
+        Err(e) => {
+            error!("Error when getting category from controller: {}", e);
+            Err(ResponseError::InternalServerError)
+        }
+    }
 }
 
 /// Get a thread (name/description), or all categories (limited).
@@ -180,7 +247,7 @@ fn get_threads_category(id: CategoryId) -> JsonResult<ContentSuccess> {
 ///     }
 /// }
 #[get("/thread/<opt_id>")]
-fn get_thread(opt_id: OptId<ThreadId>) -> JsonResult<ContentSuccess> {
+fn get_thread(opt_id: OptId<ThreadId>) -> JsonResponseResult<ContentSuccess> {
     match *opt_id {
         Some(id) => {
             // Get a thread
@@ -201,7 +268,7 @@ fn get_thread(opt_id: OptId<ThreadId>) -> JsonResult<ContentSuccess> {
 
 /// Get a threads comments.
 #[get("/thread/<id>/comments")]
-fn get_comments_in_thread(id: ThreadId) -> JsonResult<ContentSuccess> {
+fn get_comments_in_thread(id: ThreadId) -> JsonResponseResult<ContentSuccess> {
     trace!("Getting all comments from thread with id {:?}", id);
     //let result = controller.get_comment_in_thread(id).map(Json).map_err(Json)
     Err(ContentError::InvalidId)
@@ -236,7 +303,7 @@ fn get_comments_in_thread(id: ThreadId) -> JsonResult<ContentSuccess> {
 ///     }
 /// }
 #[get("/comments/<opt_id>")]
-fn get_comment(opt_id: OptId<CommentId>) -> JsonResult<ContentSuccess> {
+fn get_comment(opt_id: OptId<CommentId>) -> JsonResponseResult<ContentSuccess> {
     match *opt_id {
         Some(id) => {
             // Get a comment
@@ -278,13 +345,33 @@ fn get_comment(opt_id: OptId<CommentId>) -> JsonResult<ContentSuccess> {
 ///         }
 /// }
 #[get("/user/<id>")]
-fn get_user(id: UserId) -> JsonResult<ContentSuccess> {
+fn get_user(id: UserId) -> JsonResponseResult<ContentSuccess> {
     trace!("Getting user with id {:?}", id);
-    //let result = controller.get_comment_in_thread(id).map(Json).map_err(Json)
-    Err(ContentError::InvalidId)
-        .map_err(ResponseError::from)
-        .map(Json)
-        .map_err(Json)
+    
+    let user_id = GetUserPayload {
+        id: id
+    };
+
+    let con =
+        controller::SyncClient::connect(CONTENT_IP, Options::default())
+        .map_err(|e| {
+            error!("error connecting to controller: {}", e);
+            Json(ResponseError::InternalServerError)
+        })?;
+
+    match con.get_user(user_id) {
+        Ok(v) => {
+            trace!("Gotten back user info for user with id {:?} from controller.", id);
+            Ok(v)
+        },
+        Err(e) => {
+            error!("Error when getting user from controller: {}", e);
+            Err(ResponseError::InternalServerError)
+        }
+    }
+    .map_err(ResponseError::from)
+    .map(Json)
+    .map_err(Json)
 }
 
 
@@ -332,7 +419,7 @@ fn get_user(id: UserId) -> JsonResult<ContentSuccess> {
 ///}
 /// ´´´
 #[post("/content", format = "application/json", data = "<req>")]
-pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResult<ContentSuccess> {
+pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResult<ContentSuccess> {
     use datatypes::content::requests::ContentRequest::*;
     use datatypes::content::responses::CategoryPayload;
 

@@ -1,7 +1,7 @@
 //! The code to ban, unban and check if ip is banned.
 
 use crate::auth::api::{authenticated, Token};
-use crate::JsonResult;
+use crate::JsonResponseResult;
 use datatypes::admin::requests::AdminRequest;
 use datatypes::admin::responses::AdminSuccess;
 use datatypes::error::ResponseError;
@@ -113,7 +113,7 @@ pub fn post_admin(
     token: Token,
     req: Json<AdminRequest>,
     banned_ips: State<Arc<RwLock<HashSet<IpAddr>>>>,
-) -> JsonResult<AdminSuccess> {
+) -> JsonResponseResult<AdminSuccess> {
     authenticated(token).map_err(|_| Json(ResponseError::Unauthenticated))?;
 
     match *req {

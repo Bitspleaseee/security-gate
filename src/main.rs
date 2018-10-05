@@ -34,7 +34,7 @@ pub mod logging;
 pub mod comms;
 
 /// Convenience wrapper around a `Result` of `Json` values
-type JsonResult<T> =
+type JsonResponseResult<T> =
     Result<rocket_contrib::Json<T>, rocket_contrib::Json<datatypes::error::ResponseError>>;
 
 fn main() {
