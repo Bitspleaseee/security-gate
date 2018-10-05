@@ -91,7 +91,7 @@ fn search(search_form: SearchForm) -> JsonResponseResult<ContentSuccess> {
         })?;
 
     match con.search(search_request)
-        .map_err(|_| Json(ResponseError::InternalServerError))? {
+         {
         Ok(v) => {
             trace!("Gotten back search info for query {:?} from controller.", search_request.query);
             Ok(ContentSuccess::SearchResult(v))
@@ -161,7 +161,8 @@ fn get_category(opt_id: OptId<CategoryId>) -> JsonResponseResult<ContentSuccess>
             let category_payload: GetCategoryPayload = GetCategoryPayload {
                 id: raw_id
             };
-            match con.get_category(category_payload) {
+            match con.get_category(category_payload)
+                 {
                 Ok(v) => {
                     trace!("Gotten back category with id {:?} from controller.", raw_id);
                     Ok(ContentSuccess::Category(v))
@@ -175,11 +176,12 @@ fn get_category(opt_id: OptId<CategoryId>) -> JsonResponseResult<ContentSuccess>
         None => {
             // Get all categories
             //let result = controller.get_all_category();
-            let also_hidden: GetCategoriesPayload = GetCategoriesPayload {
+            let also_hidden: GetHiddenPayload = GetHiddenPayload {
                 include_hidden: false,
             };
             trace!("Getting all categories");
-            match con.get_categories(also_hidden) {
+            match con.get_categories(also_hidden)
+                 {
                 Ok(v) => {
                     trace!("Gotten back all categories from controller. Also hidden: {:?}", also_hidden.include_hidden);
                     Ok(ContentSuccess::Categories(v))
@@ -210,16 +212,19 @@ fn get_threads_category(id: CategoryId) -> JsonResponseResult<ContentSuccess> {
             Json(ResponseError::InternalServerError)
         })?;
 
-    match con.get_threads(category_payload) {
+    match con.get_threads(category_payload)
+         {
         Ok(v) => {
             trace!("Gotten back category with id {:?} from controller.", id);
-            Ok(v)
+            Ok(ContentSuccess::Threads(v))
         },
         Err(e) => {
             error!("Error when getting category from controller: {}", e);
             Err(ResponseError::InternalServerError)
         }
-    }
+    }.map_err(ResponseError::from)
+    .map(Json)
+    .map_err(Json)
 }
 
 /// Get a thread (name/description), or all categories (limited).
@@ -249,18 +254,54 @@ fn get_threads_category(id: CategoryId) -> JsonResponseResult<ContentSuccess> {
 /// }
 #[get("/thread/<opt_id>")]
 fn get_thread(opt_id: OptId<ThreadId>) -> JsonResponseResult<ContentSuccess> {
+    let con =
+        controller::SyncClient::connect(CONTROLLER_IP, Options::default())
+        .map_err(|e| {
+            error!("error connecting to controller: {}", e);
+            Json(ResponseError::InternalServerError)
+        })?;
+    
     match *opt_id {
-        Some(id) => {
+        Some(raw_id) => {
             // Get a thread
-            //let result = controller.get_thread(id);
-            trace!("Getting thread with id {:?}", id);
-            Err(ContentError::InvalidId)
+            trace!("Getting thread with id {:?}", raw_id);
+
+            let thread_payload: GetThreadPayload = GetThreadPayload {
+                id: raw_id
+            };
+
+            match con.get_thread(thread_payload)
+                 {
+                Ok(v) => {
+                    trace!("Gotten back thread with id {:?} from controller.", raw_id);
+                    Ok(ContentSuccess::Thread(v))
+                },
+                Err(e) => {
+                    error!("Error when getting thread from controller: {}", e);
+                    Err(ResponseError::InternalServerError)
+                }
+            }
         }
         None => {
             // Get all threads
             //let result = controller.get_all_threads();
             trace!("Getting all threads");
-            Err(ContentError::InvalidId)
+            
+            let also_hidden: GetHiddenPayload = GetHiddenPayload {
+                include_hidden: false,
+            };
+
+           match con.get_all_threads(also_hidden)
+                 {
+                Ok(v) => {
+                    trace!("Gotten back all threads from controller.");
+                    Ok(ContentSuccess::Threads(v))
+                },
+                Err(e) => {
+                    error!("Error when getting all threads from controller: {}", e);
+                    Err(ResponseError::InternalServerError)
+                }
+            }
         }
     }.map_err(ResponseError::from)
     .map(Json)
@@ -270,9 +311,30 @@ fn get_thread(opt_id: OptId<ThreadId>) -> JsonResponseResult<ContentSuccess> {
 /// Get a threads comments.
 #[get("/thread/<id>/comments")]
 fn get_comments_in_thread(id: ThreadId) -> JsonResponseResult<ContentSuccess> {
+    let con =
+        controller::SyncClient::connect(CONTROLLER_IP, Options::default())
+        .map_err(|e| {
+            error!("error connecting to controller: {}", e);
+            Json(ResponseError::InternalServerError)
+        })?;
+    
     trace!("Getting all comments from thread with id {:?}", id);
-    //let result = controller.get_comment_in_thread(id).map(Json).map_err(Json)
-    Err(ContentError::InvalidId)
+
+    let comments_payload: GetCommentsPayload = GetCommentsPayload {
+        id: id
+    };
+
+    match con.get_comments(comments_payload)
+         {
+            Ok(v) => {
+                trace!("Gotten back all comments in thread with id from controller.", id);
+                Ok(ContentSuccess::Comments(v))
+            },
+            Err(e) => {
+                error!("Error when getting all threads from controller: {}", e);
+                Err(ResponseError::InternalServerError)
+            }
+        }
         .map_err(ResponseError::from)
         .map(Json)
         .map_err(Json)
@@ -305,18 +367,51 @@ fn get_comments_in_thread(id: ThreadId) -> JsonResponseResult<ContentSuccess> {
 /// }
 #[get("/comments/<opt_id>")]
 fn get_comment(opt_id: OptId<CommentId>) -> JsonResponseResult<ContentSuccess> {
+    let con =
+        controller::SyncClient::connect(CONTROLLER_IP, Options::default())
+        .map_err(|e| {
+            error!("error connecting to controller: {}", e);
+            Json(ResponseError::InternalServerError)
+        })?;
+
     match *opt_id {
-        Some(id) => {
+        Some(raw_id) => {
             // Get a comment
-            //let result = controller.get_comment(id);
-            trace!("Getting thread with id {:?}", id);
-            Err(ContentError::InvalidId)
+            trace!("Getting comment with id {:?}", raw_id);
+            
+            let comment_payload: GetCommentPayload = GetCommentPayload {
+                id: raw_id
+            };
+
+            match con.get_comment(comment_payload) {
+                Ok(v) => {
+                    trace!("Gotten back comment with id {:?} from controller.", raw_id);
+                    Ok(ContentSuccess::Threads(v))
+                },
+                Err(e) => {
+                    error!("Error when getting all threads from controller: {}", e);
+                    Err(ResponseError::InternalServerError)
+                }
+            }
         }
         None => {
             // Get all comments
-            //let result = controller.get_all_comments();
-            trace!("Getting all threads");
-            Err(ContentError::InvalidId)
+            trace!("Getting all comments");
+
+            let also_hidden: GetHiddenPayload = GetHiddenPayload {
+                include_hidden: false,
+            };
+
+            match con.get_comment(also_hidden) {
+                Ok(v) => {
+                    trace!("Gotten back all comments from controller.");
+                    Ok(ContentSuccess::Threads(v))
+                },
+                Err(e) => {
+                    error!("Error when getting all comments from controller: {}", e);
+                    Err(ResponseError::InternalServerError)
+                }
+            }
         }
     }.map_err(ResponseError::from)
     .map(Json)
@@ -363,7 +458,7 @@ fn get_user(id: UserId) -> JsonResponseResult<ContentSuccess> {
     match con.get_user(user_id) {
         Ok(v) => {
             trace!("Gotten back user info for user with id {:?} from controller.", id);
-            Ok(v)
+            Ok(ContentSuccess::User(v))
         },
         Err(e) => {
             error!("Error when getting user from controller: {}", e);
@@ -427,135 +522,147 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
     // Ask auth-module if user can do this (is logged in and has correct role):
     authenticated(token).map_err(|_| Json(ResponseError::Unauthenticated))?;
 
+        let con =
+            controller::SyncClient::connect(CONTROLLER_IP, Options::default())
+            .map_err(|e| {
+                error!("error connecting to controller: {}", e);
+                Json(ResponseError::InternalServerError)
+            })?;
+
     match *req {
         AddCategory(ref p) => {
             // Relays what is sent back to the user
-            // TODO must be changed, added for testing
-            let title = p.title.clone();
-            let description = p.description.clone();
-
-            let con =
-                controller::SyncClient::connect(CONTROLLER_IP, Options::default())
-                .map_err(|e| {
-                    error!("error connecting to controller: {}", e);
-                    Json(ResponseError::InternalServerError)
-                })?;
-
-            // con.content_request(p)
-            //new_category(title, description)
-            Err(ContentError::InvalidId)
-                .map_err(ResponseError::from)
+            match con.add_category(p) {
+                Ok(v) => {
+                    trace!("Added new category with title: {}", p.title.clone());
+                    Ok(ContentSuccess::Category(v))
+                },
+                Err(e) => {
+                    error!("Error when adding new category with title {}: {}", p.title.clone(), e);
+                    Err(ResponseError::InternalServerError)
+                }
+            }
         }
-        /*EditCategory(ref p) => {
+        EditCategory(ref p) => {
             // Relays what is sent back to the user
-            // TODO must be changed, added for testing
-            ////let id = p.id().clone();
-            let title = p.title().clone();
-            let description = p.description().clone();
-
-            let payload = CategoryPayload::new(1, title, description);
-            Ok(ContentSuccess::Category(payload))
-            //edit_category(id, title, description)
-            //Err(ContentError::InvalidId)
-        }*/
-        /*HideCategory(ref p) => {
+            match con.edit_category(p) {
+                Ok(v) => {
+                    trace!("Edited category with id: {}", p.id.clone());
+                    Ok(ContentSuccess::Category(v))
+                },
+                Err(e) => {
+                    error!("Error when trying to edit category with id {}: {}", p.id.clone(), e);
+                    Err(ResponseError::InternalServerError)
+                }
+            }
+        }
+        HideCategory(ref p) => {
             // Relays what is sent back to the user
-            // TODO must be changed, added for testing
-            let id = p.id().clone();
-            let title = p.title().clone();
-            let description = p.description().clone();
-
-            let payload = CategoryPayload::new(id, title, description);
-            Ok(ContentSuccess::Category(payload))
-            //hide_category(id, title, description)
-            //Err(ContentError::InvalidId)
+            match con.hide_category(p) {
+                Ok(v) => {
+                    trace!("Hided category with id: {}", p.id.clone());
+                    Ok(ContentSuccess::Category(v))
+                },
+                Err(e) => {
+                    error!("Error when trying to hide category with id {}: {}", p.id.clone(), e);
+                    Err(ResponseError::InternalServerError)
+                }
+            }
         }
         AddThread(ref p) => {
             // Relays what is sent back to the user
-            // TODO must be changed, added for testing
-            let category_id = p.category_id().clone();
-            let title = p.title().clone();
-            let description = p.description().clone();
-
-            let payload = CategoryPayload::new(1, title, description);
-            Ok(ContentSuccess::Category(payload))
-            //new_thread(title, description)
-            //Err(ContentError::InvalidId)
+            match con.add_thread(p) {
+                Ok(v) => {
+                    trace!("Added new thread with title: {}", p.title.clone());
+                    Ok(ContentSuccess::Thread(v))
+                },
+                Err(e) => {
+                    error!("Error when adding new thread with title {}: {}", p.title.clone(), e);
+                    Err(ResponseError::InternalServerError)
+                }
+            }
         }
         EditThread(ref p) => {
             // Relays what is sent back to the user
-            // TODO must be changed, added for testing
-            let id = p.id().clone();
-            let category_id = p.category_id().clone();
-            let title = p.title().clone();
-            let description = p.description().clone();
-
-            let payload = CategoryPayload::new(id, title, description);
-            Ok(ContentSuccess::Category(payload))
-            //edit_thread(id, title, description)
-            //Err(ContentError::InvalidId)
+            match con.edit_thread(p) {
+                Ok(v) => {
+                    trace!("Edited thread with id: {}", p.id.clone());
+                    Ok(ContentSuccess::Thread(v))
+                },
+                Err(e) => {
+                    error!("Error when trying to edit thread with id {}: {}", p.id.clone(), e);
+                    Err(ResponseError::InternalServerError)
+                }
+            }
         }
         HideThread(ref p) => {
             // Relays what is sent back to the user
-            // TODO must be changed, added for testing
-            let id = p.id().clone();
-            let title = p.title().clone();
-            let description = p.description().clone();
-
-            let payload = CategoryPayload::new(id, title, description);
-            Ok(ContentSuccess::Category(payload))
-            //hide_thread(id, title, description)
-            //Err(ContentError::InvalidId)
+            match con.hide_thread(p) {
+                Ok(v) => {
+                    trace!("Hided thread with id: {}", p.id.clone());
+                    Ok(ContentSuccess::Thread(v))
+                },
+                Err(e) => {
+                    error!("Error when trying to hide thread with id {}: {}", p.id.clone(), e);
+                    Err(ResponseError::InternalServerError)
+                }
+            }
         }
         AddComment(ref p) => {
             // Relays what is sent back to the user
-            // TODO must be changed, added for testing
-            let title = p.title().clone();
-            let description = p.description().clone();
-
-            let payload = CategoryPayload::new(1, title, description);
-            Ok(ContentSuccess::Category(payload))
-            //new_comment(title, description)
-            //Err(ContentError::InvalidId)
+            match con.add_comment(p) {
+                Ok(v) => {
+                    trace!("Added new comment with title: {}", p.title.clone());
+                    Ok(ContentSuccess::Comment(v))
+                },
+                Err(e) => {
+                    error!("Error when adding new comment with title {}: {}", p.title.clone(), e);
+                    Err(ResponseError::InternalServerError)
+                }
+            }
         }
         EditComment(ref p) => {
             // Relays what is sent back to the user
-            // TODO must be changed, added for testing
-            let id = p.id().clone();
-            let title = p.title().clone();
-            let description = p.description().clone();
-
-            let payload = CategoryPayload::new(id, title, description);
-            Ok(ContentSuccess::Category(payload))
-            //edit_comment(id, title, description)
-            //Err(ContentError::InvalidId)
+            match con.edit_comment(p) {
+                Ok(v) => {
+                    trace!("Edited comment with id: {}", p.id.clone());
+                    Ok(ContentSuccess::Comment(v))
+                },
+                Err(e) => {
+                    error!("Error when trying to edit comment with id {}: {}", p.id.clone(), e);
+                    Err(ResponseError::InternalServerError)
+                }
+            }
         }
         HideComment(ref p) => {
             // Relays what is sent back to the user
-            // TODO must be changed, added for testing
-            let id = p.id().clone();
-            let title = p.title().clone();
-            let description = p.description().clone();
-
-            let payload = CategoryPayload::new(id, title, description);
-            Ok(ContentSuccess::Category(payload))
-            //hide_comment(id, title, description)
-            //Err(ContentError::InvalidId)
+            match con.hide_comment(p) {
+                Ok(v) => {
+                    trace!("Hided comment with id: {}", p.id.clone());
+                    Ok(ContentSuccess::Category(v))
+                },
+                Err(e) => {
+                    error!("Error when trying to hide comment with id {}: {}", p.id.clone(), e);
+                    Err(ResponseError::InternalServerError)
+                }
+            }
         }
         UploadAvatar(ref p) => {
             // Relays what is sent back to the user
-            // TODO must be changed, added for testing
-            let id = p.id().clone();
-            let title = p.title().clone();
-            let description = p.description().clone();
-
-            let payload = CategoryPayload::new(id, title, description);
-            Ok(ContentSuccess::Category(payload))
-            //upload_avatar(id, title, description)
-            //Err(ContentError::InvalidId)
-        }*/
+            match con.upload_avatar(p) {
+                Ok(v) => {
+                    trace!("Uploaded avatar");
+                    Ok(ContentSuccess::Avatar(v))
+                },
+                Err(e) => {
+                    error!("Error when trying to upload avatar: {}", e);
+                    Err(ResponseError::InternalServerError)
+                }
+            }
+        }
         _ => unimplemented!(),
     }
+    .map_err(ResponseError::from)
     .map(Json)
     .map_err(Json)
 }

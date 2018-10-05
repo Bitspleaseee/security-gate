@@ -11,19 +11,21 @@ service! {
     rpc upload_avatar(payload: UploadAvatarPayload) -> ResponseResult<UserPayload>;
 
     rpc get_category(payload: GetCategoryPayload) -> ResponseResult<CategoryPayload>;
-    rpc get_categories(payload: GetCategoriesPayload) -> ResponseResult<Vec<CategoryPayload>>;
+    rpc get_categories(payload: GetHiddenPayload) -> ResponseResult<Vec<CategoryPayload>>;
     rpc add_category(payload: AddCategoryPayload) -> ResponseResult<CategoryPayload>;
     rpc edit_category(payload: EditCategoryPayload) -> ResponseResult<CategoryPayload>;
     rpc hide_category(payload: HideCategoryPayload) -> ResponseResult<CategoryPayload>;
 
     rpc get_thread(payload: GetThreadPayload) -> ResponseResult<ThreadPayload>;
     rpc get_threads(payload: GetThreadsPayload) -> ResponseResult<Vec<ThreadPayload>>;
+    rpc get_all_threads(payload: GetHiddenPayload) -> ResponseResult<Vec<ThreadPayload>>;
     rpc add_thread(payload: AddThreadPayload) -> ResponseResult<ThreadPayload>;
     rpc edit_thread(payload: EditThreadPayload) -> ResponseResult<ThreadPayload>;
     rpc hide_thread(payload: HideThreadPayload) -> ResponseResult<ThreadPayload>;
 
     rpc get_comment(payload: GetCommentPayload) -> ResponseResult<CommentPayload>;
     rpc get_comments(payload: GetCommentsPayload) -> ResponseResult<Vec<CommentPayload>>;
+    rpc get_all_comments(payload: GetHiddenPayload) -> ResponseResult<Vec<CommentPayload>>;
     rpc add_comment(payload: AddCommentPayload) -> ResponseResult<CommentPayload>;
     rpc edit_comment(payload: EditCommentPayload) -> ResponseResult<CommentPayload>;
     rpc hide_comment(payload: HideCommentPayload) -> ResponseResult<CommentPayload>;

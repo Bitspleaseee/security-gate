@@ -1,5 +1,5 @@
 use crate::auth::api::{authenticate, register, deauthenticate, USER_TOKEN_NAME};
-use crate::JsonResult;
+use crate::JsonResponseResult;
 use datatypes::auth::requests::AuthRequest;
 use datatypes::auth::responses::AuthSuccess;
 use datatypes::error::ResponseError;
@@ -50,7 +50,7 @@ use rocket_contrib::Json;
 ///
 /// The possible types are defined in [`AuthError`](../responses/enum.AuthError.html)
 #[post("/auth", format = "application/json", data = "<req>")]
-pub fn auth(mut cookies: Cookies, req: Json<AuthRequest>) -> JsonResult<AuthSuccess> {
+pub fn auth(mut cookies: Cookies, req: Json<AuthRequest>) -> JsonResponseResult<AuthSuccess> {
     use datatypes::auth::requests::AuthRequest::*;
     match *req {
         Authenticate(ref p) => authenticate(&p.username, &p.password).map(|token| {
