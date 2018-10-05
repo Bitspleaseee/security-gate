@@ -91,8 +91,7 @@ fn search(search_form: SearchForm) -> JsonResponseResult<ContentSuccess> {
         })?;
 
     match con.search(search_request)
-        .map_err(|_| ResponseError::InternalServerError)
-        .and_then(|r| r) {
+        .map_err(|_| Json(ResponseError::InternalServerError))? {
         Ok(v) => {
             trace!("Gotten back search info for query {:?} from controller.", search_request.query);
             Ok(ContentSuccess::SearchResult(v))
