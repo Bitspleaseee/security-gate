@@ -82,7 +82,7 @@ fn search(search_form: SearchForm) -> JsonResponseResult<ContentSuccess> {
         "Sending search request to controller. search-string: {:?}",
         search_request.query
     );
-    
+
     let con =
         controller::SyncClient::connect(CONTENT_IP, Options::default())
         .map_err(|e| {
@@ -90,10 +90,12 @@ fn search(search_form: SearchForm) -> JsonResponseResult<ContentSuccess> {
             Json(ResponseError::InternalServerError)
         })?;
 
-    match con.search(search_request) {
+    match con.search(search_request)
+        .map_err(|_| ResponseError::InternalServerError)
+        .and_then(|r| r) {
         Ok(v) => {
             trace!("Gotten back search info for query {:?} from controller.", search_request.query);
-            Ok(ContentSuccess::SearchResult(v.and_then(v))
+            Ok(ContentSuccess::SearchResult(v))
         },
         Err(e) => {
             error!("Error when getting user from controller: {}", e);
@@ -156,7 +158,7 @@ fn get_category(opt_id: OptId<CategoryId>) -> JsonResponseResult<ContentSuccess>
             // Get a category
             //let result = controller.get_category(id);
             trace!("Getting category with id {:?}", raw_id);
-            
+
             let category_payload: GetCategoryPayload = GetCategoryPayload {
                 id: raw_id
             };
@@ -347,7 +349,7 @@ fn get_comment(opt_id: OptId<CommentId>) -> JsonResponseResult<ContentSuccess> {
 #[get("/user/<id>")]
 fn get_user(id: UserId) -> JsonResponseResult<ContentSuccess> {
     trace!("Getting user with id {:?}", id);
-    
+
     let user_id = GetUserPayload {
         id: id
     };
