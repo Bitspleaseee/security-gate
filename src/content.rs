@@ -14,7 +14,7 @@ use datatypes::valid::fields::*;
 use datatypes::valid::ids::*;
 
 use crate::comms::controller;
-use crate::comms::controller::CONTENT_IP;
+use crate::comms::controller::CONTROLLER_IP;
 
 /// Get the main webpage.
 ///
@@ -84,7 +84,7 @@ fn search(search_form: SearchForm) -> JsonResponseResult<ContentSuccess> {
     );
     
     let con =
-        controller::SyncClient::connect(CONTENT_IP, Options::default())
+        controller::SyncClient::connect(CONTROLLER_IP, Options::default())
         .map_err(|e| {
             error!("error connecting to controller: {}", e);
             Json(ResponseError::InternalServerError)
@@ -145,7 +145,7 @@ impl Into<SearchPayload> for SearchForm {
 #[get("/category/<opt_id>")]
 fn get_category(opt_id: OptId<CategoryId>) -> JsonResponseResult<ContentSuccess> {
     let con =
-        controller::SyncClient::connect(CONTENT_IP, Options::default())
+        controller::SyncClient::connect(CONTROLLER_IP, Options::default())
         .map_err(|e| {
             error!("error connecting to controller: {}", e);
             Json(ResponseError::InternalServerError)
@@ -203,7 +203,7 @@ fn get_threads_category(id: CategoryId) -> JsonResponseResult<ContentSuccess> {
     };
 
     let con =
-        controller::SyncClient::connect(CONTENT_IP, Options::default())
+        controller::SyncClient::connect(CONTROLLER_IP, Options::default())
         .map_err(|e| {
             error!("error connecting to controller: {}", e);
             Json(ResponseError::InternalServerError)
@@ -353,7 +353,7 @@ fn get_user(id: UserId) -> JsonResponseResult<ContentSuccess> {
     };
 
     let con =
-        controller::SyncClient::connect(CONTENT_IP, Options::default())
+        controller::SyncClient::connect(CONTROLLER_IP, Options::default())
         .map_err(|e| {
             error!("error connecting to controller: {}", e);
             Json(ResponseError::InternalServerError)
@@ -434,7 +434,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
             let description = p.description.clone();
 
             let con =
-                controller::SyncClient::connect("localhost:1000", Options::default())
+                controller::SyncClient::connect(CONTROLLER_IP, Options::default())
                 .map_err(|e| {
                     error!("error connecting to controller: {}", e);
                     Json(ResponseError::InternalServerError)

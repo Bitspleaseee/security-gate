@@ -2,7 +2,7 @@ use datatypes::content::requests::*;
 use datatypes::content::responses::*;
 use datatypes::error::{ResponseError, ResponseResult};
 
-pub const CONTENT_IP: &'static str = "localhost:1000";
+pub const CONTROLLER_IP: &'static str = "localhost:1000";
 
 service! {
     rpc get_user(payload: GetUserPayload) -> ResponseResult<UserPayload>;
