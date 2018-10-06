@@ -1,10 +1,5 @@
 //! The code to ban, unban and check if ip is banned.
 
-use crate::auth::api::{authenticated, Token};
-use crate::JsonResponseResult;
-use datatypes::admin::requests::AdminRequest;
-use datatypes::admin::responses::AdminSuccess;
-use datatypes::error::ResponseError;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::Rocket;
 use rocket::State;
@@ -14,6 +9,13 @@ use std::collections::HashSet;
 use std::net::IpAddr;
 use std::sync::Arc;
 use std::sync::RwLock;
+
+use datatypes::admin::requests::AdminRequest;
+use datatypes::admin::responses::AdminSuccess;
+use datatypes::error::ResponseError;
+use datatypes::valid::token::Token;
+
+use crate::JsonResponseResult;
 
 // Define blacklist:
 #[derive(Default)]
@@ -67,7 +69,7 @@ impl Fairing for BanIpAddrs {
                 req.method(),
                 req.uri()
             );
-            req.set_uri("/banned");         // If banned, redirect to banned-page.
+            req.set_uri("/banned"); // If banned, redirect to banned-page.
         }
     }
 }
@@ -77,7 +79,6 @@ impl Fairing for BanIpAddrs {
 fn banned_message() -> &'static str {
     "You are banned from this site."
 }
-
 
 /// Ban or unban users.
 ///
@@ -114,33 +115,51 @@ pub fn post_admin(
     req: Json<AdminRequest>,
     banned_ips: State<Arc<RwLock<HashSet<IpAddr>>>>,
 ) -> JsonResponseResult<AdminSuccess> {
-    authenticated(token).map_err(|_| Json(ResponseError::Unauthenticated))?;
+    // TODO must be defined after the `service!` has landed from the
+    // auth-service
+    //authenticated(token).map_err(|e| {
+    //    error!("Unable to authenticate user as admin: {}", e);
+    //    Json(e)
+    //})?;
 
-    match *req {
-        AdminRequest::BanIp(ref p) => {
-            let mut banned_ips = banned_ips
-                .write()
-                .map_err(|_| Json(ResponseError::InternalServerError))?;
+    use datatypes::admin::requests::AdminRequest::*;
+    match req.into_inner() {
+        BanIp(p) => {
+            // Use a separate scope to perform insertion
+            //
+            // This is to minimize the amount of time we store the
+            // 'RwLockWriteGuard' to prevent blocking other requests from
+            // reading from 'banned_ips'
+            let res = {
+                banned_ips
+                    .write()
+                    .map_err(|_| Json(ResponseError::InternalServerError))?
+                    .insert(p.ip)
+            };
 
             // TODO should we tell the user about this indifference?
             // true  => IpAddr is now banned
             // false => IpAddr is already banned
-            if banned_ips.insert(p.ip) {
+            if res {
                 info!("banned ip {}", p.ip);
             } else {
                 info!("tried to ban already banned ip {}", p.ip);
             }
             Ok(AdminSuccess::IpBanned)
         }
-        AdminRequest::UnbanIp(ref p) => {
-            let mut banned_ips = banned_ips
-                .write()
-                .map_err(|_| Json(ResponseError::InternalServerError))?;
+        UnbanIp(p) => {
+            // Use a separate scope to perform removal
+            let res = {
+                banned_ips
+                    .write()
+                    .map_err(|_| Json(ResponseError::InternalServerError))?
+                    .remove(&p.ip)
+            };
 
             // TODO should we tell the user about this indifference?
             // true  => IpAddr is now unbanned
             // false => IpAddr is already unbanned
-            if banned_ips.remove(&p.ip) {
+            if res {
                 info!("unbanned ip {}", p.ip);
             } else {
                 info!("tried to unban already unbanned ip {}", p.ip);

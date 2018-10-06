@@ -1,8 +1,8 @@
 use datatypes::content::requests::*;
 use datatypes::content::responses::*;
-use datatypes::error::{ResponseError, ResponseResult};
+use datatypes::error::ResponseError;
 
-pub const CONTROLLER_IP: &'static str = "localhost:1000";
+pub const CONTROLLER_IP: &str = "localhost:1000";
 
 service! {
     rpc get_user(payload: GetUserPayload) -> UserPayload | ResponseError;
@@ -33,4 +33,3 @@ service! {
     rpc search(payload: SearchPayload) -> SearchResultsPayload | ResponseError;
 
 }
-

@@ -23,15 +23,15 @@ extern crate fern;
 extern crate tarpc;
 
 use rocket::config::{Config, Environment};
+use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::Header;
 use rocket::{Request, Response};
-use rocket::fairing::{Fairing, Info, Kind};
 
 pub mod auth;
 pub mod banned;
+pub mod comms;
 pub mod content;
 pub mod logging;
-pub mod comms;
 
 /// Convenience wrapper around a `Result` of `Json` values
 type JsonResponseResult<T> =
@@ -70,7 +70,7 @@ fn main() {
             "/api/",
             routes![
                 banned::post_admin,
-                auth::routes::auth,
+                auth::auth,
                 content::search,
                 content::get_category,
                 content::get_thread,
@@ -89,7 +89,7 @@ impl Fairing for ModifyResponseHeaders {
     fn info(&self) -> Info {
         Info {
             name: "alter generic headers (e.g. CSP header)",
-            kind: Kind::Response
+            kind: Kind::Response,
         }
     }
     fn on_response(&self, _: &Request, res: &mut Response) {
@@ -101,4 +101,3 @@ impl Fairing for ModifyResponseHeaders {
         );
     }
 }
-
