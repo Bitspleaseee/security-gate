@@ -1,4 +1,4 @@
-//! API-routes to manage content.
+﻿//! API-routes to manage content.
 use rocket::response::NamedFile;
 use rocket_contrib::Json;
 use std::path::{Path, PathBuf};
@@ -71,8 +71,7 @@ fn static_file(file: PathBuf) -> Option<NamedFile> {
 ///                 "thread_id": 23,
 ///                 "parent_id": 54,
 ///                 "user_id": 4,
-///                 "title": "SV: How to make a hello world app in javascript",
-///                 "description": "See on http://w3schools.com",
+///                 "description": "See on http://w3schools.com for how to make a hello world app",
 ///                 "timestamp": 201820121206
 ///             }
 ///         ],
@@ -298,7 +297,6 @@ fn get_comments_in_thread(id: ThreadId) -> JsonResponseResult<ContentSuccess> {
 ///         "id": 98,
 ///         "thread_id": 6,
 ///         "user_id": 22,
-///         "title": "Hello",
 ///         "description": "Hello everybody.",
 ///         "timestamp": 201820901206
 ///     }
