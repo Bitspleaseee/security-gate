@@ -46,7 +46,7 @@ fn static_file(file: PathBuf) -> Option<NamedFile> {
 /// ## Query
 ///
 /// ´´´text
-/// localhost:9000/api/search?q=hello%20world
+/// localhost:9234/api/search?q=hello%20world
 /// ´´´
 ///
 /// ## Result
@@ -80,9 +80,12 @@ fn static_file(file: PathBuf) -> Option<NamedFile> {
 /// }
 /// ´´´
 #[get("/search?<search_form>")]
-fn search(search_form: SearchForm) -> JsonResponseResult<ContentSuccess> {
+fn search(search_form: SearchForm, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
+    let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
+    
     let search_req: SearchPayload = SearchPayload {
         query: search_form.q,
+        include_hidden,
     };
 
     info!("Requesting search query '{:?}'", search_req.query);
@@ -118,7 +121,7 @@ impl Into<SearchPayload> for SearchForm {
 /// ## Query
 ///
 /// ´´´text
-/// localhost:9000/api/category/3
+/// localhost:9234/api/category/3
 /// ´´´
 ///
 /// ## Result
@@ -135,10 +138,11 @@ impl Into<SearchPayload> for SearchForm {
 /// }
 /// ´´´
 #[get("/category/<id>")]
-fn get_category(id: CategoryId) -> JsonResponseResult<ContentSuccess> {
+fn get_category(id: CategoryId, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
     info!("Requesting category with id {}", id);
 
-    let category_payload: GetCategoryPayload = GetCategoryPayload { id };
+    let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
+    let category_payload: GetCategoryPayload = GetCategoryPayload { id, include_hidden };
 
     connect_to_controller()
         .map_err(Json)?
@@ -153,11 +157,53 @@ fn get_category(id: CategoryId) -> JsonResponseResult<ContentSuccess> {
 }
 
 /// Get all categories (limited)
+///
+/// # Example
+///
+/// ## Query
+///
+/// ´´´text
+/// localhost:9234/api/categories
+/// ´´´
+///
+/// ## Result
+/// ´´´json
+/// {
+///     "type": "CATEGORIES",
+///     "payload": [{
+///         "id": 1,
+///         "user_id": 1,
+///         "title": "Rust",
+///         "description": "All questions regarding Rust.",
+///         "timestamp": 201820033206
+///     },
+///     {
+///         "id": 2,
+///         "user_id": 1,
+///         "title": "PHP",
+///         "description": "All questions regarding PHP.",
+///         "timestamp": 201820033206
+///     },
+///     {
+///         "id": 3,
+///         "user_id": 4,
+///         "title": "Javascript",
+///         "description": "All questions regarding javascript.",
+///         "timestamp": 201820031206
+///     },
+///     {
+///         "id": 4,
+///         "user_id": 4,
+///         "title": "HTML",
+///         "description": "All questions regarding HTML.",
+///         "timestamp": 201820033206
+///     }]
+/// }
+/// ´´´
 #[get("/categories")]
-fn get_categories() -> JsonResponseResult<ContentSuccess> {
-    let hidden_payload: GetHiddenPayload = GetHiddenPayload {
-        include_hidden: false,
-    };
+fn get_categories(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
+    let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
+    let hidden_payload: GetHiddenPayload = GetHiddenPayload {include_hidden};
 
     info!("Requesting all categories");
 
@@ -175,9 +221,10 @@ fn get_categories() -> JsonResponseResult<ContentSuccess> {
 
 /// Get the threads of a specific category
 #[get("/category/<id>/threads")]
-fn get_threads_category(id: CategoryId) -> JsonResponseResult<ContentSuccess> {
+fn get_threads_category(id: CategoryId, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
     info!("Requesting all threads from category with id {:?}", id);
 
+    let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
     let threads_payload: GetThreadsPayload = GetThreadsPayload { id };
 
     // TODO give this (get_threads) a better name such as
@@ -219,10 +266,11 @@ fn get_threads_category(id: CategoryId) -> JsonResponseResult<ContentSuccess> {
 ///     }
 /// }
 #[get("/thread/<id>")]
-fn get_thread(id: ThreadId) -> JsonResponseResult<ContentSuccess> {
+fn get_thread(id: ThreadId, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
     info!("Getting thread with id {:?}", id);
 
-    let thread_payload: GetThreadPayload = GetThreadPayload { id };
+    let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
+    let thread_payload: GetThreadPayload = GetThreadPayload { id, include_hidden };
 
     connect_to_controller()
         .map_err(Json)?
@@ -238,12 +286,11 @@ fn get_thread(id: ThreadId) -> JsonResponseResult<ContentSuccess> {
 
 /// Get all threads (limited)
 #[get("/threads")]
-fn get_threads() -> JsonResponseResult<ContentSuccess> {
+fn get_threads(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
     info!("Requesting all threads");
 
-    let hidden_payload: GetHiddenPayload = GetHiddenPayload {
-        include_hidden: false,
-    };
+    let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
+    let hidden_payload: GetHiddenPayload = GetHiddenPayload {include_hidden};
 
     connect_to_controller()
         .map_err(Json)?
@@ -261,9 +308,10 @@ fn get_threads() -> JsonResponseResult<ContentSuccess> {
 
 /// Get a threads comments.
 #[get("/thread/<id>/comments")]
-fn get_comments_in_thread(id: ThreadId) -> JsonResponseResult<ContentSuccess> {
+fn get_comments_in_thread(id: ThreadId, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
     info!("Requesting all comments from thread with id {:?}", id);
 
+    let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
     let comments_payload: GetCommentsPayload = GetCommentsPayload { id };
 
     connect_to_controller()
@@ -302,10 +350,11 @@ fn get_comments_in_thread(id: ThreadId) -> JsonResponseResult<ContentSuccess> {
 ///     }
 /// }
 #[get("/comment/<id>")]
-fn get_comment(id: CommentId) -> JsonResponseResult<ContentSuccess> {
+fn get_comment(id: CommentId, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
     info!("Requesting comment with id {:?}", id);
 
-    let comment_payload: GetCommentPayload = GetCommentPayload { id };
+    let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
+    let comment_payload: GetCommentPayload = GetCommentPayload { id, include_hidden };
 
     connect_to_controller()
         .map_err(Json)?
@@ -321,12 +370,11 @@ fn get_comment(id: CommentId) -> JsonResponseResult<ContentSuccess> {
 
 /// Get all comment (limited)
 #[get("/comments")]
-fn get_comments() -> JsonResponseResult<ContentSuccess> {
+fn get_comments(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
     info!("Requesting all comments");
 
-    let hidden_payload: GetHiddenPayload = GetHiddenPayload {
-        include_hidden: false,
-    };
+    let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false)
+    let hidden_payload: GetHiddenPayload = GetHiddenPayload {include_hidden};
 
     connect_to_controller()
         .map_err(Json)?
