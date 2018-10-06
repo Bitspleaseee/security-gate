@@ -163,7 +163,7 @@ fn get_categories() -> JsonResponseResult<ContentSuccess> {
 
     connect_to_controller()
         .map_err(Json)?
-        .get_categories(hidden_payload)
+        .get_all_categories(hidden_payload)
         .map(|v| {
             info!("Returning success from 'get-categories' request");
             Json(ContentSuccess::Categories(v))
@@ -180,11 +180,9 @@ fn get_threads_category(id: CategoryId) -> JsonResponseResult<ContentSuccess> {
 
     let threads_payload: GetThreadsPayload = GetThreadsPayload { id };
 
-    // TODO give this (get_threads) a better name such as
-    // 'get_threads_of_category'
     connect_to_controller()
         .map_err(Json)?
-        .get_threads(threads_payload)
+        .get_threads_in_category(threads_payload)
         .map(|v| {
             info!("Returning success from 'get-threads-of-category' request");
             Json(ContentSuccess::Threads(v))
@@ -247,8 +245,6 @@ fn get_threads() -> JsonResponseResult<ContentSuccess> {
 
     connect_to_controller()
         .map_err(Json)?
-        // TODO rename this to 'get_threads' when 'get_threads' is
-        // renamed
         .get_all_threads(hidden_payload)
         .map(|v| {
             info!("Returning success from 'get-threads' request");
@@ -268,8 +264,7 @@ fn get_comments_in_thread(id: ThreadId) -> JsonResponseResult<ContentSuccess> {
 
     connect_to_controller()
         .map_err(Json)?
-        // TODO rename to 'get_comments_of_thread'
-        .get_comments(comments_payload)
+        .get_comments_in_thread(comments_payload)
         .map(|v| {
             info!("Returning success from 'get-comments-of-thread' request");
             Json(ContentSuccess::Comments(v))
