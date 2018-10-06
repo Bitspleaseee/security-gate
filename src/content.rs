@@ -112,9 +112,7 @@ impl Into<SearchPayload> for SearchForm {
     }
 }
 
-/// Get a category based on id or all categories (limited)
-///
-/// If you don't give an id, all categories will be returned.
+/// Get a category based on id
 ///
 /// # Example
 ///
@@ -137,46 +135,43 @@ impl Into<SearchPayload> for SearchForm {
 ///     }
 /// }
 /// ´´´
-#[get("/category/<opt_id>")]
-fn get_category(opt_id: OptId<CategoryId>) -> JsonResponseResult<ContentSuccess> {
-    match *opt_id {
-        // Get a category with a specific id
-        Some(id) => {
-            info!("Requesting category with id {}", id);
+#[get("/category/<id>")]
+fn get_category(id: CategoryId) -> JsonResponseResult<ContentSuccess> {
+    info!("Requesting category with id {}", id);
 
-            let category_payload: GetCategoryPayload = GetCategoryPayload { id };
+    let category_payload: GetCategoryPayload = GetCategoryPayload { id };
 
-            connect_to_controller()
-                .map_err(Json)?
-                .get_category(category_payload)
-                .map(|v| {
-                    info!("Returning success from 'get-category' request");
-                    Json(ContentSuccess::Category(v))
-                }).map_err(|e| {
-                    error!("Unable to 'get-category': {:?}", e);
-                    Json(e.into())
-                })
-        }
-        // Get all categories
-        None => {
-            let hidden_payload: GetHiddenPayload = GetHiddenPayload {
-                include_hidden: false,
-            };
+    connect_to_controller()
+        .map_err(Json)?
+        .get_category(category_payload)
+        .map(|v| {
+            info!("Returning success from 'get-category' request");
+            Json(ContentSuccess::Category(v))
+        }).map_err(|e| {
+            error!("Unable to 'get-category': {:?}", e);
+            Json(e.into())
+        })
+}
 
-            info!("Requesting all categories");
+/// Get all categories (limited)
+#[get("/category")]
+fn get_categories() -> JsonResponseResult<ContentSuccess> {
+    let hidden_payload: GetHiddenPayload = GetHiddenPayload {
+        include_hidden: false,
+    };
 
-            connect_to_controller()
-                .map_err(Json)?
-                .get_categories(hidden_payload)
-                .map(|v| {
-                    info!("Returning success from 'get-categories' request");
-                    Json(ContentSuccess::Categories(v))
-                }).map_err(|e| {
-                    error!("Unable to 'get-categories': {:?}", e);
-                    Json(e.into())
-                })
-        }
-    }
+    info!("Requesting all categories");
+
+    connect_to_controller()
+        .map_err(Json)?
+        .get_categories(hidden_payload)
+        .map(|v| {
+            info!("Returning success from 'get-categories' request");
+            Json(ContentSuccess::Categories(v))
+        }).map_err(|e| {
+            error!("Unable to 'get-categories': {:?}", e);
+            Json(e.into())
+        })
 }
 
 /// Get the threads of a specific category
@@ -200,9 +195,7 @@ fn get_threads_category(id: CategoryId) -> JsonResponseResult<ContentSuccess> {
         })
 }
 
-/// Get a thread based on id or all threads (limited)
-///
-/// If you don't give an id, all threads will be returned.
+/// Get a thread based on id
 ///
 /// # Example
 ///
@@ -213,6 +206,7 @@ fn get_threads_category(id: CategoryId) -> JsonResponseResult<ContentSuccess> {
 /// ´´´
 ///
 /// ## Result
+///
 /// ´´´json
 /// {
 ///     "type": "THREAD",
@@ -225,48 +219,45 @@ fn get_threads_category(id: CategoryId) -> JsonResponseResult<ContentSuccess> {
 ///         "timestamp": 201820131206
 ///     }
 /// }
-#[get("/thread/<opt_id>")]
-fn get_thread(opt_id: OptId<ThreadId>) -> JsonResponseResult<ContentSuccess> {
-    match *opt_id {
-        // Get a thread with a specific id
-        Some(id) => {
-            info!("Getting thread with id {:?}", id);
+#[get("/thread/<id>")]
+fn get_thread(id: ThreadId) -> JsonResponseResult<ContentSuccess> {
+    info!("Getting thread with id {:?}", id);
 
-            let thread_payload: GetThreadPayload = GetThreadPayload { id };
+    let thread_payload: GetThreadPayload = GetThreadPayload { id };
 
-            connect_to_controller()
-                .map_err(Json)?
-                .get_thread(thread_payload)
-                .map(|v| {
-                    info!("Returning success from 'get-thread' request");
-                    Json(ContentSuccess::Thread(v))
-                }).map_err(|e| {
-                    error!("Unable to 'get-thread': {:?}", e);
-                    Json(e.into())
-                })
-        }
-        // Get all threads
-        None => {
-            info!("Requesting all threads");
+    connect_to_controller()
+        .map_err(Json)?
+        .get_thread(thread_payload)
+        .map(|v| {
+            info!("Returning success from 'get-thread' request");
+            Json(ContentSuccess::Thread(v))
+        }).map_err(|e| {
+            error!("Unable to 'get-thread': {:?}", e);
+            Json(e.into())
+        })
+}
 
-            let hidden_payload: GetHiddenPayload = GetHiddenPayload {
-                include_hidden: false,
-            };
+/// Get all threads (limited)
+#[get("/thread")]
+fn get_threads() -> JsonResponseResult<ContentSuccess> {
+    info!("Requesting all threads");
 
-            connect_to_controller()
-                .map_err(Json)?
-                // TODO rename this to 'get_threads' when 'get_threads' is
-                // renamed
-                .get_all_threads(hidden_payload)
-                .map(|v| {
-                    info!("Returning success from 'get-threads' request");
-                    Json(ContentSuccess::Threads(v))
-                }).map_err(|e| {
-                    error!("Unable to 'get-threads': {:?}", e);
-                    Json(e.into())
-                })
-        }
-    }
+    let hidden_payload: GetHiddenPayload = GetHiddenPayload {
+        include_hidden: false,
+    };
+
+    connect_to_controller()
+        .map_err(Json)?
+        // TODO rename this to 'get_threads' when 'get_threads' is
+        // renamed
+        .get_all_threads(hidden_payload)
+        .map(|v| {
+            info!("Returning success from 'get-threads' request");
+            Json(ContentSuccess::Threads(v))
+        }).map_err(|e| {
+            error!("Unable to 'get-threads': {:?}", e);
+            Json(e.into())
+        })
 }
 
 /// Get a threads comments.
@@ -289,9 +280,7 @@ fn get_comments_in_thread(id: ThreadId) -> JsonResponseResult<ContentSuccess> {
         })
 }
 
-/// Get a comment or all comments (limited).
-///
-/// If you don't give an id, all comments will be returned.
+/// Get a comment
 ///
 /// # Example
 ///
@@ -314,47 +303,44 @@ fn get_comments_in_thread(id: ThreadId) -> JsonResponseResult<ContentSuccess> {
 ///         "timestamp": 201820901206
 ///     }
 /// }
-#[get("/comments/<opt_id>")]
-fn get_comment(opt_id: OptId<CommentId>) -> JsonResponseResult<ContentSuccess> {
-    match *opt_id {
-        // Get a comment with a specific id
-        Some(id) => {
-            info!("Requesting comment with id {:?}", id);
+#[get("/comments/<id>")]
+fn get_comment(id: CommentId) -> JsonResponseResult<ContentSuccess> {
+    info!("Requesting comment with id {:?}", id);
 
-            let comment_payload: GetCommentPayload = GetCommentPayload { id };
+    let comment_payload: GetCommentPayload = GetCommentPayload { id };
 
-            connect_to_controller()
-                .map_err(Json)?
-                .get_comment(comment_payload)
-                .map(|v| {
-                    info!("Returning success from 'get-comment' request");
-                    Json(ContentSuccess::Comment(v))
-                }).map_err(|e| {
-                    error!("Unable to 'get-comment': {:?}", e);
-                    Json(e.into())
-                })
-        }
-        // Get all comments
-        None => {
-            info!("Requesting all comments");
+    connect_to_controller()
+        .map_err(Json)?
+        .get_comment(comment_payload)
+        .map(|v| {
+            info!("Returning success from 'get-comment' request");
+            Json(ContentSuccess::Comment(v))
+        }).map_err(|e| {
+            error!("Unable to 'get-comment': {:?}", e);
+            Json(e.into())
+        })
+}
 
-            let hidden_payload: GetHiddenPayload = GetHiddenPayload {
-                include_hidden: false,
-            };
+/// Get all comments (limited)
+#[get("/comments")]
+fn get_comments() -> JsonResponseResult<ContentSuccess> {
+    info!("Requesting all comments");
 
-            connect_to_controller()
-                .map_err(Json)?
-                // TODO rename to 'get_comments'
-                .get_all_comments(hidden_payload)
-                .map(|v| {
-                    info!("Returning success from 'get-comments' request");
-                    Json(ContentSuccess::Comments(v))
-                }).map_err(|e| {
-                    error!("Unable to 'get-comments': {:?}", e);
-                    Json(e.into())
-                })
-        }
-    }
+    let hidden_payload: GetHiddenPayload = GetHiddenPayload {
+        include_hidden: false,
+    };
+
+    connect_to_controller()
+        .map_err(Json)?
+        // TODO rename to 'get_comments'
+        .get_all_comments(hidden_payload)
+        .map(|v| {
+            info!("Returning success from 'get-comments' request");
+            Json(ContentSuccess::Comments(v))
+        }).map_err(|e| {
+            error!("Unable to 'get-comments': {:?}", e);
+            Json(e.into())
+        })
 }
 
 /// Get user info based id
