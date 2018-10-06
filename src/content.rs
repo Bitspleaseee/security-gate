@@ -154,7 +154,7 @@ fn get_category(id: CategoryId) -> JsonResponseResult<ContentSuccess> {
 }
 
 /// Get all categories (limited)
-#[get("/category")]
+#[get("/categories")]
 fn get_categories() -> JsonResponseResult<ContentSuccess> {
     let hidden_payload: GetHiddenPayload = GetHiddenPayload {
         include_hidden: false,
@@ -238,7 +238,7 @@ fn get_thread(id: ThreadId) -> JsonResponseResult<ContentSuccess> {
 }
 
 /// Get all threads (limited)
-#[get("/thread")]
+#[get("/threads")]
 fn get_threads() -> JsonResponseResult<ContentSuccess> {
     info!("Requesting all threads");
 
@@ -303,7 +303,7 @@ fn get_comments_in_thread(id: ThreadId) -> JsonResponseResult<ContentSuccess> {
 ///         "timestamp": 201820901206
 ///     }
 /// }
-#[get("/comments/<id>")]
+#[get("/comment/<id>")]
 fn get_comment(id: CommentId) -> JsonResponseResult<ContentSuccess> {
     info!("Requesting comment with id {:?}", id);
 
@@ -321,7 +321,7 @@ fn get_comment(id: CommentId) -> JsonResponseResult<ContentSuccess> {
         })
 }
 
-/// Get all comments (limited)
+/// Get all comment (limited)
 #[get("/comments")]
 fn get_comments() -> JsonResponseResult<ContentSuccess> {
     info!("Requesting all comments");
