@@ -170,7 +170,7 @@ fn get_category(id: CategoryId, opt_token: Option<Token>) -> JsonResponseResult<
                 error!("Unable to authorize user: {:?}", e);
                 Json(e.into())
             });
-        Role::Moderator > role
+        Role::Moderator > role.unwrap_or(Role::User)        // If error when unwrapping, think it is a normal user.
     }).unwrap_or(false);
 
     let category_payload: GetCategoryPayload = GetCategoryPayload { id, include_hidden };
@@ -584,7 +584,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
         AddCategory(p) => {
             // Relays what is sent back to the user
             // If not allowed to do this, return errormessage:
-            if Role::Moderator > role {
+            if Role::Moderator > role.unwrap_or(Role::User) {        // If error when unwrapping, think it is a normal user.
                 Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
             }
 
@@ -603,7 +603,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
         EditCategory(p) => {
             // Relays what is sent back to the user
             // If not allowed to do this, return errormessage:
-            if Role::Moderator > role {
+            if Role::Moderator > role.unwrap_or(Role::User) {        // If error when unwrapping, think it is a normal user.
                 Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
             }
             
@@ -622,7 +622,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
         HideCategory(p) => {
             // Relays what is sent back to the user
             // If not allowed to do this, return errormessage:
-            if Role::Admin > role {
+            if Role::Admin > role.unwrap_or(Role::User) {        // If error when unwrapping, think it is a normal user.
                 Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
             }
             
