@@ -443,7 +443,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
 
     // TODO must be defined when the `service!` from auth is decided
     // Ask auth-module if user can do this (is logged in and has correct role):
-    // authenticated(token).map_err(|e| {
+    // let role = authenticated(token).map_err(|e| {
     //     error!("Unable to authenticate user: {:?}", e);
     //     Json(e)
     // })?;
@@ -451,6 +451,10 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
     match req.into_inner() {
         AddCategory(p) => {
             // Relays what is sent back to the user
+            //if Role::Admin > role {
+            //    Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
+            //}
+
             info!("Forwarding a 'add-category' request");
             connect_to_controller()
                 .map_err(Json)?
