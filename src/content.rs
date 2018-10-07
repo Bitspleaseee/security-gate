@@ -81,6 +81,7 @@ fn static_file(file: PathBuf) -> Option<NamedFile> {
 /// ´´´
 #[get("/search?<search_form>")]
 fn search(search_form: SearchForm, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
+    // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
     let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
     
     let search_req: SearchPayload = SearchPayload {
@@ -116,6 +117,18 @@ impl Into<SearchPayload> for SearchForm {
 
 /// Get a category based on id
 ///
+/// # Error
+/// 
+/// You get back the error as a type.
+/// 
+/// ## Example
+/// 
+/// ´´´json
+/// {
+///     type: "INTERNAL_SERVER_ERROR"
+/// }
+/// ´´´
+/// 
 /// # Example
 ///
 /// ## Query
@@ -141,6 +154,7 @@ impl Into<SearchPayload> for SearchForm {
 fn get_category(id: CategoryId, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
     info!("Requesting category with id {}", id);
 
+    // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
     let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
     let category_payload: GetCategoryPayload = GetCategoryPayload { id, include_hidden };
 
@@ -158,6 +172,18 @@ fn get_category(id: CategoryId, opt_token: Option<Token>) -> JsonResponseResult<
 
 /// Get all categories (limited)
 ///
+/// # Error
+/// 
+/// You get back the error as a type.
+/// 
+/// ## Example
+/// 
+/// ´´´json
+/// {
+///     type: "INTERNAL_SERVER_ERROR"
+/// }
+/// ´´´
+/// 
 /// # Example
 ///
 /// ## Query
@@ -202,6 +228,7 @@ fn get_category(id: CategoryId, opt_token: Option<Token>) -> JsonResponseResult<
 /// ´´´
 #[get("/categories")]
 fn get_categories(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
+    // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
     let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
     let hidden_payload: GetHiddenPayload = GetHiddenPayload {include_hidden};
 
@@ -243,6 +270,18 @@ fn get_threads_category(id: CategoryId, opt_token: Option<Token>) -> JsonRespons
 
 /// Get a thread based on id
 ///
+/// # Error
+/// 
+/// You get back the error as a type.
+/// 
+/// ## Example
+/// 
+/// ´´´json
+/// {
+///     type: "INTERNAL_SERVER_ERROR"
+/// }
+/// ´´´
+/// 
 /// # Example
 ///
 /// ## Query
@@ -269,6 +308,7 @@ fn get_threads_category(id: CategoryId, opt_token: Option<Token>) -> JsonRespons
 fn get_thread(id: ThreadId, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
     info!("Getting thread with id {:?}", id);
 
+    // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
     let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
     let thread_payload: GetThreadPayload = GetThreadPayload { id, include_hidden };
 
@@ -289,6 +329,7 @@ fn get_thread(id: ThreadId, opt_token: Option<Token>) -> JsonResponseResult<Cont
 fn get_threads(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
     info!("Requesting all threads");
 
+    // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
     let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
     let hidden_payload: GetHiddenPayload = GetHiddenPayload {include_hidden};
 
@@ -311,6 +352,7 @@ fn get_threads(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
 fn get_comments_in_thread(id: ThreadId, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
     info!("Requesting all comments from thread with id {:?}", id);
 
+    // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
     let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
     let comments_payload: GetCommentsPayload = GetCommentsPayload { id };
 
@@ -329,6 +371,18 @@ fn get_comments_in_thread(id: ThreadId, opt_token: Option<Token>) -> JsonRespons
 
 /// Get a comment
 ///
+/// # Error
+/// 
+/// You get back the error as a type.
+/// 
+/// ## Example
+/// 
+/// ´´´json
+/// {
+///     type: "INTERNAL_SERVER_ERROR"
+/// }
+/// ´´´
+/// 
 /// # Example
 ///
 /// ## Query
@@ -353,6 +407,7 @@ fn get_comments_in_thread(id: ThreadId, opt_token: Option<Token>) -> JsonRespons
 fn get_comment(id: CommentId, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
     info!("Requesting comment with id {:?}", id);
 
+    // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
     let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
     let comment_payload: GetCommentPayload = GetCommentPayload { id, include_hidden };
 
@@ -373,6 +428,7 @@ fn get_comment(id: CommentId, opt_token: Option<Token>) -> JsonResponseResult<Co
 fn get_comments(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
     info!("Requesting all comments");
 
+    // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
     let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false)
     let hidden_payload: GetHiddenPayload = GetHiddenPayload {include_hidden};
 
@@ -391,6 +447,18 @@ fn get_comments(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> 
 
 /// Get user info based id
 ///
+/// # Error
+/// 
+/// You get back the error as a type.
+/// 
+/// ## Example
+/// 
+/// ´´´json
+/// {
+///     type: "INTERNAL_SERVER_ERROR"
+/// }
+/// ´´´
+/// 
 /// # Example
 ///
 /// ## Query
@@ -441,6 +509,18 @@ fn get_user(id: UserId) -> JsonResponseResult<ContentSuccess> {
 ///
 /// Types I can get back: 'CATEGORY', 'THREAD', 'COMMENT'.
 ///
+/// # Error
+/// 
+/// You get back the error as a type.
+/// 
+/// ## Example
+/// 
+/// ´´´json
+/// {
+///     type: "INTERNAL_SERVER_ERROR"
+/// }
+/// ´´´
+/// 
 /// # Example
 ///
 /// Send this json to 'api/content' (need to first be logged in)
