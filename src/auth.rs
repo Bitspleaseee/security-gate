@@ -1,10 +1,13 @@
 use rocket::http::Cookies;
 use rocket_contrib::Json;
 
+use tarpc::sync::client::{ClientExt, Options};
+
 use datatypes::auth::requests::AuthRequest;
 use datatypes::auth::responses::AuthSuccess;
 use datatypes::error::ResponseError;
 use datatypes::valid::token::{Token, USER_TOKEN_NAME};
+use datatypes::payloads::TokenPayload;
 
 use crate::comms::auth::SyncClient as AuthClient;
 use crate::comms::auth::AUTH_IP;
@@ -86,7 +89,7 @@ pub fn auth(mut cookies: Cookies, req: Json<AuthRequest>) -> JsonResponseResult<
 
             connect_to_auth()
                 .map_err(Json)?
-                .deauthenticate(cookie)
+                .deauthenticate(TokenPayload::new(EmptyPayload, cookie))
                 .map(|v| {
                     info!("User deauthenticated successfully");
                     cookies.remove_private(cookie);
