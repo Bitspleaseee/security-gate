@@ -6,7 +6,18 @@ use datatypes::auth::responses::AuthSuccess;
 use datatypes::error::ResponseError;
 use datatypes::valid::token::{Token, USER_TOKEN_NAME};
 
+use crate::comms::auth::SyncClient as AuthClient;
+use crate::comms::auth::AUTH_IP;
+
 use crate::JsonResponseResult;
+
+// Connect to authentication service
+pub fn connect_to_auth() -> Result<AuthClient, ResponseError> {
+    AuthClient::connect(AUTH_IP, Options::default()).map_err(|e| {
+        error!("Unable to connect to authentication-service: {:?}", e);
+        ResponseError::InternalServerError
+    })
+}
 
 /// Authenticate or deauthenticate user
 ///
@@ -57,24 +68,45 @@ pub fn auth(mut cookies: Cookies, req: Json<AuthRequest>) -> JsonResponseResult<
     use datatypes::auth::requests::AuthRequest::*;
     match req.into_inner() {
         Authenticate(p) => {
-            let token = Token::new("testt");
-            cookies.add_private(token.into());
-            info!("User '{}' authenticated successfully", &p.username);
-            Ok(AuthSuccess::Authenticated)
-        }
+            connect_to_auth()
+                .map_err(Json)?
+                .authenticate(p)
+                .map(|v| {
+                    info!("User '{}' authenticated successfully", &p.username);
+                    Json(AuthSuccess::Authenticated)
+                }).map_err(|e| {
+                    error!("Unable to 'authenticate': {:?}", e);
+                    Json(e.into())
+                })
+        },
         Deauthenticate(_) => {
             let cookie = cookies
                 .get_private(USER_TOKEN_NAME)
                 .ok_or(Json(ResponseError::Unauthenticated))?;
 
-            info!("User deauthenticated successfully");
-            cookies.remove_private(cookie);
-            Ok(AuthSuccess::Deauthenticated)
-        }
+            connect_to_auth()
+                .map_err(Json)?
+                .deauthenticate(cookie)
+                .map(|v| {
+                    info!("User deauthenticated successfully");
+                    cookies.remove_private(cookie);
+                    Json(AuthSuccess::Deauthenticated)
+                }).map_err(|e| {
+                    error!("Unable to 'authenticate': {:?}", e);
+                    Json(e.into())
+                })
+        },
         RegisterUser(p) => {
-            info!("User '{}' authenticated successfully", &p.username);
-            Ok(AuthSuccess::UserRegistered)
+            connect_to_auth()
+                .map_err(Json)?
+                .register(p)
+                .map(|v| {
+                    info!("User '{}' registered successfully", &p.username);
+                    Json(AuthSuccess::UserRegistered)
+                }).map_err(|e| {
+                    error!("Unable to 'register': {:?}", e);
+                    Json(e.into())
+                })
         }
-    }.map(Json)
-    .map_err(Json)
+    }
 }

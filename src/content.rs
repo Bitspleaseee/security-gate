@@ -12,9 +12,11 @@ use datatypes::error::ResponseError;
 use datatypes::valid::fields::*;
 use datatypes::valid::ids::*;
 use datatypes::valid::token::Token;
+use datatypes::auth::responses::*;
 
 use crate::comms::controller::SyncClient as ControllerClient;
 use crate::comms::controller::CONTROLLER_IP;
+use crate::auth::connect_to_auth;
 
 fn connect_to_controller() -> Result<ControllerClient, ResponseError> {
     ControllerClient::connect(CONTROLLER_IP, Options::default()).map_err(|e| {
@@ -159,7 +161,17 @@ fn get_category(id: CategoryId, opt_token: Option<Token>) -> JsonResponseResult<
     info!("Requesting category with id {}", id);
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
-    let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
+    let include_hidden = opt_token.map(|token| {
+        let role = connect_to_auth()
+            .map_err(Json)?
+            .get_user_role()
+            .map_err(|e| {
+                error!("Unable to authorize user: {:?}", e);
+                Json(e.into())
+            })?;
+        Role::Moderator > role
+    }).unwrap_or(false);
+
     let category_payload: GetCategoryPayload = GetCategoryPayload { id, include_hidden };
 
     connect_to_controller()
@@ -428,7 +440,7 @@ fn get_comments(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> 
     info!("Requesting all comments");
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
-    let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false)
+    let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
     let hidden_payload: GetHiddenPayload = GetHiddenPayload {include_hidden};
 
     connect_to_controller()
@@ -556,12 +568,16 @@ fn get_user(id: UserId) -> JsonResponseResult<ContentSuccess> {
 pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResult<ContentSuccess> {
     use datatypes::content::requests::ContentRequest::*;
 
-    // TODO must be defined when the `service!` from auth is decided
-    // Ask auth-module if user can do this (is logged in and has correct role):
-    // let role = authenticated(token).map_err(|e| {
-    //     error!("Unable to authenticate user: {:?}", e);
-    //     Json(e)
-    // })?;
+    // Check what role the user has (and that a user is valid):
+    let role = connect_to_auth()
+        .map_err(Json)?
+        .get_user_role()
+        .map(|v| {
+            v
+        }).map_err(|e| {
+            error!("Unable to authenticate user: {:?}", e);
+            Json(e.into())
+        })?;
 
     match req.into_inner() {
         AddCategory(p) => {
