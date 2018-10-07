@@ -14,6 +14,7 @@ use datatypes::valid::ids::*;
 use datatypes::valid::token::Token;
 use datatypes::auth::responses::*;
 use datatypes::payloads::TokenPayload;
+use datatypes::payloads::EmptyPayload;
 
 use crate::comms::controller::SyncClient as ControllerClient;
 use crate::comms::controller::CONTROLLER_IP;
