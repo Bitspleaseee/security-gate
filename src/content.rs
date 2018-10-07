@@ -26,8 +26,16 @@ fn connect_to_controller() -> Result<ControllerClient, ResponseError> {
     })
 }
 
-fn is_admin_or_mod(token: Token) -> bool {
-    false
+fn is_admin_or_mod(token: Option<Token>) -> Result<bool, ResponseError> {
+    token.map_or(Ok(false), |t| {
+        Ok(connect_to_auth()
+            .map_err(|e| {
+                error!("Failed to connect to auth service: {:?}", e);
+                e
+            })?.get_user_role(TokenPayload::new(None, t))
+            .unwrap_or(Role::User)
+            <= Role::Moderator)
+    })
 }
 
 /// Get the main webpage
@@ -89,10 +97,7 @@ fn static_file(file: PathBuf) -> Option<NamedFile> {
 #[get("/search?<search_form>")]
 fn search(search_form: SearchForm, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
-    let include_hidden = opt_token
-        .map(|token| is_admin_or_mod(token))
-        .unwrap_or(false);
-
+    let include_hidden: bool = is_admin_or_mod(opt_token).map_err(|e| Json(e))?;
     let search_req: SearchPayload = SearchPayload {
         query: search_form.q,
         include_hidden,
@@ -168,9 +173,8 @@ fn get_category(id: CategoryId, opt_token: Option<Token>) -> JsonResponseResult<
     info!("Requesting category with id {}", id);
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
-    let include_hidden = opt_token
-        .map(|token| is_admin_or_mod(token))
-        .unwrap_or(false);
+
+    let include_hidden: bool = is_admin_or_mod(opt_token).map_err(|e| Json(e))?;
     let category_payload: GetCategoryPayload = GetCategoryPayload { id, include_hidden };
 
     connect_to_controller()
@@ -246,9 +250,7 @@ fn get_categories(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess
     info!("Requesting all categories");
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
-    let include_hidden = opt_token
-        .map(|token| is_admin_or_mod(token))
-        .unwrap_or(false);
+    let include_hidden: bool = is_admin_or_mod(opt_token).map_err(|e| Json(e))?;
     let hidden_payload: GetHiddenPayload = GetHiddenPayload { include_hidden };
 
     connect_to_controller()
@@ -272,9 +274,7 @@ fn get_threads_category(
     info!("Requesting all threads from category with id {:?}", id);
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
-    let include_hidden = opt_token
-        .map(|token| is_admin_or_mod(token))
-        .unwrap_or(false);
+    let include_hidden: bool = is_admin_or_mod(opt_token).map_err(|e| Json(e))?;
     let threads_payload: GetThreadsPayload = GetThreadsPayload { id, include_hidden };
 
     connect_to_controller()
@@ -330,9 +330,7 @@ fn get_thread(id: ThreadId, opt_token: Option<Token>) -> JsonResponseResult<Cont
     info!("Getting thread with id {:?}", id);
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
-    let include_hidden = opt_token
-        .map(|token| is_admin_or_mod(token))
-        .unwrap_or(false);
+    let include_hidden: bool = is_admin_or_mod(opt_token).map_err(|e| Json(e))?;
     let thread_payload: GetThreadPayload = GetThreadPayload { id, include_hidden };
 
     connect_to_controller()
@@ -353,9 +351,7 @@ fn get_threads(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
     info!("Requesting all threads");
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
-    let include_hidden = opt_token
-        .map(|token| is_admin_or_mod(token))
-        .unwrap_or(false);
+    let include_hidden: bool = is_admin_or_mod(opt_token).map_err(|e| Json(e))?;
     let hidden_payload: GetHiddenPayload = GetHiddenPayload { include_hidden };
 
     connect_to_controller()
@@ -379,9 +375,7 @@ fn get_comments_in_thread(
     info!("Requesting all comments from thread with id {:?}", id);
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
-    let include_hidden = opt_token
-        .map(|token| is_admin_or_mod(token))
-        .unwrap_or(false);
+    let include_hidden: bool = is_admin_or_mod(opt_token).map_err(|e| Json(e))?;
     let comments_payload: GetCommentsPayload = GetCommentsPayload { id, include_hidden };
 
     connect_to_controller()
@@ -435,9 +429,7 @@ fn get_comment(id: CommentId, opt_token: Option<Token>) -> JsonResponseResult<Co
     info!("Requesting comment with id {:?}", id);
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
-    let include_hidden = opt_token
-        .map(|token| is_admin_or_mod(token))
-        .unwrap_or(false);
+    let include_hidden: bool = is_admin_or_mod(opt_token).map_err(|e| Json(e))?;
     let comment_payload: GetCommentPayload = GetCommentPayload { id, include_hidden };
 
     connect_to_controller()
@@ -458,9 +450,7 @@ fn get_comments(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> 
     info!("Requesting all comments");
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
-    let include_hidden = opt_token
-        .map(|token| is_admin_or_mod(token))
-        .unwrap_or(false);
+    let include_hidden: bool = is_admin_or_mod(opt_token).map_err(|e| Json(e))?;
     let hidden_payload: GetHiddenPayload = GetHiddenPayload { include_hidden };
 
     connect_to_controller()
@@ -589,11 +579,11 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
     use datatypes::content::requests::ContentRequest::*;
 
     // Check what role the user has (and that a user is valid):
-    let role = Role::Admin; /*connect_to_auth()
+    let role = connect_to_auth()
         .map_err(Json)?
-        .get_user_role(TokenPayload::new (None,token))
-        .map_err(Json);
-    let role = role.unwrap_or(Role::User)*/
+        .get_user_role(TokenPayload::new(None, token))
+        .map_err(Json)
+        .unwrap_or(Role::User);
 
     match req.into_inner() {
         AddCategory(p) => {
