@@ -566,9 +566,10 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
     match req.into_inner() {
         AddCategory(p) => {
             // Relays what is sent back to the user
-            //if Role::Admin > role {
-            //    Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
-            //}
+            // If not allowed to do this, return errormessage:
+            if Role::Moderator > role {
+                Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
+            }
 
             info!("Forwarding a 'add-category' request");
             connect_to_controller()
@@ -584,6 +585,11 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
         }
         EditCategory(p) => {
             // Relays what is sent back to the user
+            // If not allowed to do this, return errormessage:
+            if Role::Moderator > role {
+                Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
+            }
+            
             info!("Forwarding a 'edit-category' request");
             connect_to_controller()
                 .map_err(Json)?
@@ -598,6 +604,11 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
         }
         HideCategory(p) => {
             // Relays what is sent back to the user
+            // If not allowed to do this, return errormessage:
+            if Role::Admin > role {
+                Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
+            }
+            
             info!("Forwarding a 'hide-category' request");
             connect_to_controller()
                 .map_err(Json)?
