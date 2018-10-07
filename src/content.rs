@@ -1,4 +1,4 @@
-﻿//! API-routes to manage content.
+//! API-routes to manage content.
 use rocket::response::NamedFile;
 use rocket_contrib::Json;
 use std::path::{Path, PathBuf};
@@ -6,18 +6,18 @@ use tarpc::sync::client::{ClientExt, Options};
 
 use crate::JsonResponseResult;
 
+use datatypes::auth::responses::*;
 use datatypes::content::requests::*;
 use datatypes::content::responses::*;
 use datatypes::error::ResponseError;
+use datatypes::payloads::TokenPayload;
 use datatypes::valid::fields::*;
 use datatypes::valid::ids::*;
 use datatypes::valid::token::Token;
-use datatypes::auth::responses::*;
-use datatypes::payloads::TokenPayload;
 
+use crate::auth::connect_to_auth;
 use crate::comms::controller::SyncClient as ControllerClient;
 use crate::comms::controller::CONTROLLER_IP;
-use crate::auth::connect_to_auth;
 
 fn connect_to_controller() -> Result<ControllerClient, ResponseError> {
     ControllerClient::connect(CONTROLLER_IP, Options::default()).map_err(|e| {
@@ -89,8 +89,10 @@ fn static_file(file: PathBuf) -> Option<NamedFile> {
 #[get("/search?<search_form>")]
 fn search(search_form: SearchForm, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
-    let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
-    
+    let include_hidden = opt_token
+        .map(|token| is_admin_or_mod(token))
+        .unwrap_or(false);
+
     let search_req: SearchPayload = SearchPayload {
         query: search_form.q,
         include_hidden,
@@ -129,17 +131,17 @@ impl Into<SearchPayload> for SearchForm {
 /// Get a category based on id
 ///
 /// # Error
-/// 
+///
 /// You get back the error as a type.
-/// 
+///
 /// ## Example
-/// 
+///
 /// ´´´json
 /// {
 ///     type: "INTERNAL_SERVER_ERROR"
 /// }
 /// ´´´
-/// 
+///
 /// # Example
 ///
 /// ## Query
@@ -166,7 +168,9 @@ fn get_category(id: CategoryId, opt_token: Option<Token>) -> JsonResponseResult<
     info!("Requesting category with id {}", id);
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
-    let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
+    let include_hidden = opt_token
+        .map(|token| is_admin_or_mod(token))
+        .unwrap_or(false);
     let category_payload: GetCategoryPayload = GetCategoryPayload { id, include_hidden };
 
     connect_to_controller()
@@ -184,17 +188,17 @@ fn get_category(id: CategoryId, opt_token: Option<Token>) -> JsonResponseResult<
 /// Get all categories (limited)
 ///
 /// # Error
-/// 
+///
 /// You get back the error as a type.
-/// 
+///
 /// ## Example
-/// 
+///
 /// ´´´json
 /// {
 ///     type: "INTERNAL_SERVER_ERROR"
 /// }
 /// ´´´
-/// 
+///
 /// # Example
 ///
 /// ## Query
@@ -240,10 +244,12 @@ fn get_category(id: CategoryId, opt_token: Option<Token>) -> JsonResponseResult<
 #[get("/categories")]
 fn get_categories(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
     info!("Requesting all categories");
-    
+
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
-    let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
-    let hidden_payload: GetHiddenPayload = GetHiddenPayload {include_hidden};
+    let include_hidden = opt_token
+        .map(|token| is_admin_or_mod(token))
+        .unwrap_or(false);
+    let hidden_payload: GetHiddenPayload = GetHiddenPayload { include_hidden };
 
     connect_to_controller()
         .map_err(Json)?
@@ -259,11 +265,16 @@ fn get_categories(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess
 
 /// Get the threads of a specific category
 #[get("/category/<id>/threads")]
-fn get_threads_category(id: CategoryId, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
+fn get_threads_category(
+    id: CategoryId,
+    opt_token: Option<Token>,
+) -> JsonResponseResult<ContentSuccess> {
     info!("Requesting all threads from category with id {:?}", id);
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
-    let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
+    let include_hidden = opt_token
+        .map(|token| is_admin_or_mod(token))
+        .unwrap_or(false);
     let threads_payload: GetThreadsPayload = GetThreadsPayload { id, include_hidden };
 
     connect_to_controller()
@@ -281,17 +292,17 @@ fn get_threads_category(id: CategoryId, opt_token: Option<Token>) -> JsonRespons
 /// Get a thread based on id
 ///
 /// # Error
-/// 
+///
 /// You get back the error as a type.
-/// 
+///
 /// ## Example
-/// 
+///
 /// ´´´json
 /// {
 ///     type: "INTERNAL_SERVER_ERROR"
 /// }
 /// ´´´
-/// 
+///
 /// # Example
 ///
 /// ## Query
@@ -319,7 +330,9 @@ fn get_thread(id: ThreadId, opt_token: Option<Token>) -> JsonResponseResult<Cont
     info!("Getting thread with id {:?}", id);
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
-    let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
+    let include_hidden = opt_token
+        .map(|token| is_admin_or_mod(token))
+        .unwrap_or(false);
     let thread_payload: GetThreadPayload = GetThreadPayload { id, include_hidden };
 
     connect_to_controller()
@@ -340,8 +353,10 @@ fn get_threads(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
     info!("Requesting all threads");
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
-    let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
-    let hidden_payload: GetHiddenPayload = GetHiddenPayload {include_hidden};
+    let include_hidden = opt_token
+        .map(|token| is_admin_or_mod(token))
+        .unwrap_or(false);
+    let hidden_payload: GetHiddenPayload = GetHiddenPayload { include_hidden };
 
     connect_to_controller()
         .map_err(Json)?
@@ -357,11 +372,16 @@ fn get_threads(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
 
 /// Get a threads comments.
 #[get("/thread/<id>/comments")]
-fn get_comments_in_thread(id: ThreadId, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
+fn get_comments_in_thread(
+    id: ThreadId,
+    opt_token: Option<Token>,
+) -> JsonResponseResult<ContentSuccess> {
     info!("Requesting all comments from thread with id {:?}", id);
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
-    let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
+    let include_hidden = opt_token
+        .map(|token| is_admin_or_mod(token))
+        .unwrap_or(false);
     let comments_payload: GetCommentsPayload = GetCommentsPayload { id, include_hidden };
 
     connect_to_controller()
@@ -379,17 +399,17 @@ fn get_comments_in_thread(id: ThreadId, opt_token: Option<Token>) -> JsonRespons
 /// Get a comment
 ///
 /// # Error
-/// 
+///
 /// You get back the error as a type.
-/// 
+///
 /// ## Example
-/// 
+///
 /// ´´´json
 /// {
 ///     type: "INTERNAL_SERVER_ERROR"
 /// }
 /// ´´´
-/// 
+///
 /// # Example
 ///
 /// ## Query
@@ -415,7 +435,9 @@ fn get_comment(id: CommentId, opt_token: Option<Token>) -> JsonResponseResult<Co
     info!("Requesting comment with id {:?}", id);
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
-    let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
+    let include_hidden = opt_token
+        .map(|token| is_admin_or_mod(token))
+        .unwrap_or(false);
     let comment_payload: GetCommentPayload = GetCommentPayload { id, include_hidden };
 
     connect_to_controller()
@@ -436,8 +458,10 @@ fn get_comments(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> 
     info!("Requesting all comments");
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
-    let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
-    let hidden_payload: GetHiddenPayload = GetHiddenPayload {include_hidden};
+    let include_hidden = opt_token
+        .map(|token| is_admin_or_mod(token))
+        .unwrap_or(false);
+    let hidden_payload: GetHiddenPayload = GetHiddenPayload { include_hidden };
 
     connect_to_controller()
         .map_err(Json)?
@@ -455,17 +479,17 @@ fn get_comments(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> 
 /// Get user info based id
 ///
 /// # Error
-/// 
+///
 /// You get back the error as a type.
-/// 
+///
 /// ## Example
-/// 
+///
 /// ´´´json
 /// {
 ///     type: "INTERNAL_SERVER_ERROR"
 /// }
 /// ´´´
-/// 
+///
 /// # Example
 ///
 /// ## Query
@@ -517,17 +541,17 @@ fn get_user(id: UserId) -> JsonResponseResult<ContentSuccess> {
 /// Types I can get back: 'CATEGORY', 'THREAD', 'COMMENT'.
 ///
 /// # Error
-/// 
+///
 /// You get back the error as a type.
-/// 
+///
 /// ## Example
-/// 
+///
 /// ´´´json
 /// {
 ///     type: "INTERNAL_SERVER_ERROR"
 /// }
 /// ´´´
-/// 
+///
 /// # Example
 ///
 /// Send this json to 'api/content' (need to first be logged in)
@@ -565,7 +589,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
     use datatypes::content::requests::ContentRequest::*;
 
     // Check what role the user has (and that a user is valid):
-    let role = Role::Admin;/*connect_to_auth()
+    let role = Role::Admin; /*connect_to_auth()
         .map_err(Json)?
         .get_user_role(TokenPayload::new (None,token))
         .map_err(Json);
@@ -597,7 +621,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
             if role > Role::Moderator {
                 Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
             }
-            
+
             info!("Forwarding a 'edit-category' request");
             connect_to_controller()
                 .map_err(Json)?
@@ -616,7 +640,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
             if role > Role::Admin {
                 Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
             }
-            
+
             info!("Forwarding a 'hide-category' request");
             connect_to_controller()
                 .map_err(Json)?

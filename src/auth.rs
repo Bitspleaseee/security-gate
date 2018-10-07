@@ -6,8 +6,8 @@ use tarpc::sync::client::{ClientExt, Options};
 use datatypes::auth::requests::AuthRequest;
 use datatypes::auth::responses::AuthSuccess;
 use datatypes::error::ResponseError;
-use datatypes::valid::token::USER_TOKEN_NAME;
 use datatypes::payloads::TokenPayload;
+use datatypes::valid::token::USER_TOKEN_NAME;
 
 use crate::comms::auth::SyncClient as AuthClient;
 use crate::comms::auth::AUTH_IP;
@@ -83,7 +83,7 @@ pub fn auth(mut cookies: Cookies, req: Json<AuthRequest>) -> JsonResponseResult<
                     error!("Unable to 'authenticate': {:?}", e);
                     Json(e.into())
                 })
-        },
+        }
         Deauthenticate(_) => {
             let cookie = cookies
                 .get_private(USER_TOKEN_NAME)
@@ -100,7 +100,7 @@ pub fn auth(mut cookies: Cookies, req: Json<AuthRequest>) -> JsonResponseResult<
                     error!("Unable to 'authenticate': {:?}", e);
                     Json(e.into())
                 })
-        },
+        }
         RegisterUser(p) => {
             let username = p.username.clone();
             connect_to_auth()
