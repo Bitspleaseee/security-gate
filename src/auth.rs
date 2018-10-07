@@ -8,6 +8,7 @@ use datatypes::auth::responses::AuthSuccess;
 use datatypes::error::ResponseError;
 use datatypes::valid::token::{Token, USER_TOKEN_NAME};
 use datatypes::payloads::TokenPayload;
+use datatypes::payloads::EmptyPayload;
 
 use crate::comms::auth::SyncClient as AuthClient;
 use crate::comms::auth::AUTH_IP;
