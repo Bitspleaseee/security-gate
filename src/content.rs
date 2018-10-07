@@ -107,11 +107,15 @@ fn search(search_form: SearchForm, opt_token: Option<Token>) -> JsonResponseResu
 #[derive(FromForm, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SearchForm {
     q: QueryStr,
+    hidden: Option<bool>,
 }
 
 impl Into<SearchPayload> for SearchForm {
     fn into(self) -> SearchPayload {
-        SearchPayload { query: self.q }
+        SearchPayload {
+            query: self.q,
+            include_hidden: self.hidden.unwrap_or(false),
+        }
     }
 }
 
@@ -236,7 +240,7 @@ fn get_categories(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess
 
     connect_to_controller()
         .map_err(Json)?
-        .get_categories(hidden_payload)
+        .get_all_categories(hidden_payload)
         .map(|v| {
             info!("Returning success from 'get-categories' request");
             Json(ContentSuccess::Categories(v))
@@ -254,11 +258,9 @@ fn get_threads_category(id: CategoryId, opt_token: Option<Token>) -> JsonRespons
     let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
     let threads_payload: GetThreadsPayload = GetThreadsPayload { id };
 
-    // TODO give this (get_threads) a better name such as
-    // 'get_threads_of_category'
     connect_to_controller()
         .map_err(Json)?
-        .get_threads(threads_payload)
+        .get_threads_in_category(threads_payload)
         .map(|v| {
             info!("Returning success from 'get-threads-of-category' request");
             Json(ContentSuccess::Threads(v))
@@ -335,8 +337,6 @@ fn get_threads(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
 
     connect_to_controller()
         .map_err(Json)?
-        // TODO rename this to 'get_threads' when 'get_threads' is
-        // renamed
         .get_all_threads(hidden_payload)
         .map(|v| {
             info!("Returning success from 'get-threads' request");
@@ -358,8 +358,7 @@ fn get_comments_in_thread(id: ThreadId, opt_token: Option<Token>) -> JsonRespons
 
     connect_to_controller()
         .map_err(Json)?
-        // TODO rename to 'get_comments_of_thread'
-        .get_comments(comments_payload)
+        .get_comments_in_thread(comments_payload)
         .map(|v| {
             info!("Returning success from 'get-comments-of-thread' request");
             Json(ContentSuccess::Comments(v))
@@ -559,7 +558,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
 
     // TODO must be defined when the `service!` from auth is decided
     // Ask auth-module if user can do this (is logged in and has correct role):
-    // authenticated(token).map_err(|e| {
+    // let role = authenticated(token).map_err(|e| {
     //     error!("Unable to authenticate user: {:?}", e);
     //     Json(e)
     // })?;
@@ -567,6 +566,10 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
     match req.into_inner() {
         AddCategory(p) => {
             // Relays what is sent back to the user
+            //if Role::Admin > role {
+            //    Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
+            //}
+
             info!("Forwarding a 'add-category' request");
             connect_to_controller()
                 .map_err(Json)?
@@ -688,20 +691,6 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
                     Json(ContentSuccess::Comment(v))
                 }).map_err(|e| {
                     error!("Unable to 'hide-comment': {:?}", e);
-                    Json(e.into())
-                })
-        }
-        UploadAvatar(p) => {
-            // Relays what is sent back to the user
-            info!("Forwarding a 'upload-avatar' request");
-            connect_to_controller()
-                .map_err(Json)?
-                .upload_avatar(p)
-                .map(|v| {
-                    info!("Returning success from 'upload-avatar' request");
-                    Json(ContentSuccess::User(v))
-                }).map_err(|e| {
-                    error!("Unable to 'upload-avatar': {:?}", e);
                     Json(e.into())
                 })
         }
