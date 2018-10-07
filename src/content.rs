@@ -1,4 +1,4 @@
-﻿//! API-routes to manage content.
+//! API-routes to manage content.
 use rocket::response::NamedFile;
 use rocket_contrib::Json;
 use std::path::{Path, PathBuf};
@@ -81,9 +81,7 @@ fn static_file(file: PathBuf) -> Option<NamedFile> {
 /// ´´´
 #[get("/search?<search_form>")]
 fn search(search_form: SearchForm) -> JsonResponseResult<ContentSuccess> {
-    let search_req: SearchPayload = SearchPayload {
-        query: search_form.q,
-    };
+    let search_req: SearchPayload = search_form.into();
 
     info!("Requesting search query '{:?}'", search_req.query);
 
@@ -103,11 +101,15 @@ fn search(search_form: SearchForm) -> JsonResponseResult<ContentSuccess> {
 #[derive(FromForm, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SearchForm {
     q: QueryStr,
+    hidden: Option<bool>,
 }
 
 impl Into<SearchPayload> for SearchForm {
     fn into(self) -> SearchPayload {
-        SearchPayload { query: self.q }
+        SearchPayload {
+            query: self.q,
+            include_hidden: self.hidden.unwrap_or(false),
+        }
     }
 }
 
@@ -138,7 +140,10 @@ impl Into<SearchPayload> for SearchForm {
 fn get_category(id: CategoryId) -> JsonResponseResult<ContentSuccess> {
     info!("Requesting category with id {}", id);
 
-    let category_payload: GetCategoryPayload = GetCategoryPayload { id };
+    let category_payload: GetCategoryPayload = GetCategoryPayload {
+        id,
+        include_hidden: false,
+    };
 
     connect_to_controller()
         .map_err(Json)?
@@ -178,7 +183,10 @@ fn get_categories() -> JsonResponseResult<ContentSuccess> {
 fn get_threads_category(id: CategoryId) -> JsonResponseResult<ContentSuccess> {
     info!("Requesting all threads from category with id {:?}", id);
 
-    let threads_payload: GetThreadsPayload = GetThreadsPayload { id };
+    let threads_payload: GetThreadsPayload = GetThreadsPayload {
+        id,
+        include_hidden: false,
+    };
 
     connect_to_controller()
         .map_err(Json)?
@@ -220,7 +228,10 @@ fn get_threads_category(id: CategoryId) -> JsonResponseResult<ContentSuccess> {
 fn get_thread(id: ThreadId) -> JsonResponseResult<ContentSuccess> {
     info!("Getting thread with id {:?}", id);
 
-    let thread_payload: GetThreadPayload = GetThreadPayload { id };
+    let thread_payload: GetThreadPayload = GetThreadPayload {
+        id,
+        include_hidden: false,
+    };
 
     connect_to_controller()
         .map_err(Json)?
@@ -260,7 +271,10 @@ fn get_threads() -> JsonResponseResult<ContentSuccess> {
 fn get_comments_in_thread(id: ThreadId) -> JsonResponseResult<ContentSuccess> {
     info!("Requesting all comments from thread with id {:?}", id);
 
-    let comments_payload: GetCommentsPayload = GetCommentsPayload { id };
+    let comments_payload: GetCommentsPayload = GetCommentsPayload {
+        id,
+        include_hidden: false,
+    };
 
     connect_to_controller()
         .map_err(Json)?
@@ -300,7 +314,10 @@ fn get_comments_in_thread(id: ThreadId) -> JsonResponseResult<ContentSuccess> {
 fn get_comment(id: CommentId) -> JsonResponseResult<ContentSuccess> {
     info!("Requesting comment with id {:?}", id);
 
-    let comment_payload: GetCommentPayload = GetCommentPayload { id };
+    let comment_payload: GetCommentPayload = GetCommentPayload {
+        id,
+        include_hidden: false,
+    };
 
     connect_to_controller()
         .map_err(Json)?
@@ -555,20 +572,6 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
                     Json(ContentSuccess::Comment(v))
                 }).map_err(|e| {
                     error!("Unable to 'hide-comment': {:?}", e);
-                    Json(e.into())
-                })
-        }
-        UploadAvatar(p) => {
-            // Relays what is sent back to the user
-            info!("Forwarding a 'upload-avatar' request");
-            connect_to_controller()
-                .map_err(Json)?
-                .upload_avatar(p)
-                .map(|v| {
-                    info!("Returning success from 'upload-avatar' request");
-                    Json(ContentSuccess::User(v))
-                }).map_err(|e| {
-                    error!("Unable to 'upload-avatar': {:?}", e);
                     Json(e.into())
                 })
         }

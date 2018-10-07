@@ -7,7 +7,6 @@ service! {
     rpc get_user(payload: GetUserPayload) -> UserPayload | ContentError;
     rpc add_user(payload: AddUserPayload) -> UserPayload | ContentError;
     rpc edit_user(payload: EditUserPayload) -> UserPayload | ContentError;
-    rpc upload_avatar(payload: UploadAvatarPayload) -> UserPayload | ContentError;
 
     rpc get_category(payload: GetCategoryPayload) -> CategoryPayload | ContentError;
     rpc get_all_categories(payload: GetHiddenPayload) -> Vec<CategoryPayload> | ContentError;
