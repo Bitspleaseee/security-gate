@@ -14,7 +14,6 @@ use datatypes::valid::ids::*;
 use datatypes::valid::token::Token;
 use datatypes::auth::responses::*;
 use datatypes::payloads::TokenPayload;
-use datatypes::payloads::EmptyPayload;
 
 use crate::comms::controller::SyncClient as ControllerClient;
 use crate::comms::controller::CONTROLLER_IP;
@@ -25,6 +24,10 @@ fn connect_to_controller() -> Result<ControllerClient, ResponseError> {
         error!("Unable to connect to controller: {:?}", e);
         ResponseError::InternalServerError
     })
+}
+
+fn is_admin_or_mod(token: Token) -> bool {
+    false
 }
 
 /// Get the main webpage
@@ -163,17 +166,7 @@ fn get_category(id: CategoryId, opt_token: Option<Token>) -> JsonResponseResult<
     info!("Requesting category with id {}", id);
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
-    let include_hidden = opt_token.map(|token| {
-        let role = connect_to_auth()
-            .map_err(Json)
-            .get_user_role(TokenPayload::new(EmptyPayload, token))
-            .map_err(|e| {
-                error!("Unable to authorize user: {:?}", e);
-                Json(e.into())
-            });
-        Role::Moderator > role.unwrap_or(Role::User)        // If error when unwrapping, think it is a normal user.
-    }).unwrap_or(false);
-
+    let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
     let category_payload: GetCategoryPayload = GetCategoryPayload { id, include_hidden };
 
     connect_to_controller()
@@ -246,11 +239,11 @@ fn get_category(id: CategoryId, opt_token: Option<Token>) -> JsonResponseResult<
 /// ´´´
 #[get("/categories")]
 fn get_categories(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
+    info!("Requesting all categories");
+    
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
     let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
     let hidden_payload: GetHiddenPayload = GetHiddenPayload {include_hidden};
-
-    info!("Requesting all categories");
 
     connect_to_controller()
         .map_err(Json)?
@@ -269,6 +262,7 @@ fn get_categories(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess
 fn get_threads_category(id: CategoryId, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
     info!("Requesting all threads from category with id {:?}", id);
 
+    // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
     let include_hidden = opt_token.map(|token| is_admin_or_mod(token)).unwrap_or(false);
     let threads_payload: GetThreadsPayload = GetThreadsPayload { id, include_hidden };
 
@@ -573,13 +567,8 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
     // Check what role the user has (and that a user is valid):
     let role = connect_to_auth()
         .map_err(Json)?
-        .get_user_role(TokenPayload::new (EmptyPayload,token))
-        .map(|v| {
-            v
-        }).map_err(|e| {
-            error!("Unable to authenticate user: {:?}", e);
-            Json(e.into())
-        });
+        .get_user_role(TokenPayload::new (None,token))
+        .map_err(Json);
 
     match req.into_inner() {
         AddCategory(p) => {
