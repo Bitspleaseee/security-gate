@@ -19,13 +19,13 @@ use crate::auth::connect_to_auth;
 use crate::comms::controller::SyncClient as ControllerClient;
 
 lazy_static! {
-    static ref CONTROLLER_IP: &'static str =
+    static ref CONTROLLER_IP: SocketAddr =
         match std::env::var("CONTROLLER_ADDRESS") {
             Ok(value) => value.as_str(),
             Err(_) => {
                 warn!("CONTROLLER_ADDRESS is not set, using 'localhost:10000'");
                 "localhost:10000"
-            }
+            }.parse().expect("Invalid formatted CONTROLLER_ADDRESS")
     };
 }
 
