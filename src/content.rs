@@ -15,6 +15,8 @@ use datatypes::valid::fields::*;
 use datatypes::valid::ids::*;
 use datatypes::valid::token::Token;
 
+use std::net::SocketAddr;
+
 use crate::auth::connect_to_auth;
 use crate::comms::controller::SyncClient as ControllerClient;
 

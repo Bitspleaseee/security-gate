@@ -8,6 +8,7 @@ use datatypes::auth::responses::{AuthSuccess, AuthError};
 use datatypes::error::ResponseError;
 use datatypes::payloads::TokenPayload;
 use datatypes::valid::token::USER_TOKEN_NAME;
+use std::net::SocketAddr;
 
 use crate::comms::auth::SyncClient as AuthClient;
 
