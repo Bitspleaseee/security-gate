@@ -21,7 +21,7 @@ use crate::comms::controller::SyncClient as ControllerClient;
 lazy_static! {
     static ref CONTROLLER_IP: &'static str =
         match std::env::var("CONTROLLER_ADDRESS") {
-            Ok(value) => value,
+            Ok(value) => value.as_str(),
             Err(_) => {
                 warn!("CONTROLLER_ADDRESS is not set, using 'localhost:10000'");
                 "localhost:10000"
