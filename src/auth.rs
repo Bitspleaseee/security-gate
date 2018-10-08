@@ -99,7 +99,7 @@ pub fn auth(
 
                     let mut cookie: Cookie = token.into();
                     cookie.set_http_only(true);
-                    cookies.add(cookie);
+                    cookies.add_private(cookie);
 
                     Json(AuthSuccess::Authenticated)
                 }).map_err(|e| {
