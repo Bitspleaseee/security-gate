@@ -70,7 +70,7 @@ pub fn connect_to_auth() -> Result<AuthClient, ResponseError> {
 pub fn auth(mut cookies: Cookies, req: Option<Json<AuthRequest>>) -> JsonResponseResult<AuthSuccess> {
     use datatypes::auth::requests::AuthRequest::*;
 
-    let req = req.ok_or(AuthError::InvalidCredentials).map_err(Json)?;           // If invalid request query.
+    let req = req.ok_or(AuthError::InvalidCredentials).map_err(|e| Json(e.into()))?;           // If invalid request query.
 
     match req.into_inner() {
         Authenticate(p) => {

@@ -119,7 +119,7 @@ pub fn post_admin(
     req: Option<Json<AdminRequest>>,
     banned_ips: State<Arc<RwLock<HashSet<IpAddr>>>>,
 ) -> JsonResponseResult<AdminSuccess> {
-    let req = req.ok_or(ContentError::InvalidContent).map_err(Json)?;           // If invalid request give error.
+    let req = req.ok_or(ContentError::InvalidContent).map_err(|e| Json(e.into()))?;           // If invalid request give error.
 
     // Check what role the user has (and that a user is valid):
     let role = connect_to_auth()
