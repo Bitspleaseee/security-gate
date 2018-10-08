@@ -67,8 +67,10 @@ pub fn connect_to_auth() -> Result<AuthClient, ResponseError> {
 ///
 /// The possible types are defined in [`AuthError`](../responses/enum.AuthError.html)
 #[post("/auth", format = "application/json", data = "<req>")]
-pub fn auth(mut cookies: Cookies, req: Json<AuthRequest>) -> JsonResponseResult<AuthSuccess> {
+pub fn auth(mut cookies: Cookies, req: Option<Json<AuthRequest>>) -> JsonResponseResult<AuthSuccess> {
     use datatypes::auth::requests::AuthRequest::*;
+
+    let req = req.ok_or(AuthError::InvalidCredentials).map_err(Json)?;           // If invalid request query.
 
     match req.into_inner() {
         Authenticate(p) => {

@@ -115,16 +115,11 @@ fn banned_message() -> &'static str {
 #[post("/admin", format = "application/json", data = "<req>")]
 pub fn post_admin(
     token: Token,
-    req: Json<AdminRequest>,
+    req: Option<Json<AdminRequest>>,
     banned_ips: State<Arc<RwLock<HashSet<IpAddr>>>>,
 ) -> JsonResponseResult<AdminSuccess> {
-    // TODO must be defined after the `service!` has landed from the
-    // auth-service
-    //authenticated(token).map_err(|e| {
-    //    error!("Unable to authenticate user as admin: {}", e);
-    //    Json(e)
-    //})?;
-
+    let req = req.ok_or(ContentError::InvalidContent).map_err(Json)?;           // If invalid request give error.
+    
     // Check what role the user has (and that a user is valid):
     let role = connect_to_auth()
         .map_err(Json)?
@@ -151,7 +146,6 @@ pub fn post_admin(
                     .insert(p.ip)
             };
 
-            // TODO should we tell the user about this indifference?
             // true  => IpAddr is now banned
             // false => IpAddr is already banned
             if res {
@@ -170,7 +164,6 @@ pub fn post_admin(
                     .remove(&p.ip)
             };
 
-            // TODO should we tell the user about this indifference?
             // true  => IpAddr is now unbanned
             // false => IpAddr is already unbanned
             if res {

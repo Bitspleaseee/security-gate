@@ -3,7 +3,7 @@ use datatypes::auth::responses::*;
 use datatypes::payloads::*;
 use datatypes::valid::token::Token;
 
-pub const AUTH_IP: &str = "localhost:10001";
+pub static AUTH_IP: &str = "localhost:10001";
 
 service! {
     rpc authenticate(payload: AuthPayload) -> Token | AuthError;

@@ -1,7 +1,7 @@
 use datatypes::content::requests::*;
 use datatypes::content::responses::*;
 
-pub const CONTROLLER_IP: &str = "localhost:10000";
+pub static CONTROLLER_IP: &str = "localhost:10000";
 
 service! {
     rpc get_user(payload: GetUserPayload) -> UserPayload | ContentError;
