@@ -14,8 +14,10 @@ use datatypes::admin::requests::AdminRequest;
 use datatypes::admin::responses::AdminSuccess;
 use datatypes::error::ResponseError;
 use datatypes::valid::token::Token;
+use datatypes::auth::responses::*;
 
 use crate::JsonResponseResult;
+use crate::auth::connect_to_auth;
 
 // Define blacklist:
 #[derive(Default)]
