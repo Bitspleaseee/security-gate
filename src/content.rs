@@ -582,7 +582,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
     let role = connect_to_auth()
         .map_err(Json)?
         .get_user_role(TokenPayload::new(None, token))
-        .map_err(Json)?;
+        .map_err(|e| Json(e.into()))?;
 
     match req.into_inner() {
         AddCategory(p) => {
