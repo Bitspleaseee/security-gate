@@ -22,11 +22,14 @@ extern crate clap;
 extern crate fern;
 #[macro_use]
 extern crate tarpc;
+extern crate rocket_cors;
 
 use rocket::config::{Config, Environment};
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::Header;
+use rocket::http::Method;
 use rocket::{Request, Response};
+use rocket_cors::{AllowedHeaders, AllowedOrigins};
 
 pub mod auth;
 pub mod banned;
@@ -88,8 +91,24 @@ fn main() {
         .finalize()
         .expect("failed to instantiate config");
 
+    // Setup cors
+    let (allowed_origins, _) = AllowedOrigins::some(&["http://localhost:8080"]);
+
+    // You can also deserialize this
+    let cors_options = rocket_cors::Cors {
+        allowed_origins: allowed_origins,
+        allowed_methods: vec![Method::Get, Method::Post]
+            .into_iter()
+            .map(From::from)
+            .collect(),
+        allowed_headers: AllowedHeaders::some(&["Authorization", "Accept", "Content-Type"]),
+        allow_credentials: true,
+        ..Default::default()
+    };
+
     info!("igniting rocket");
     rocket::custom(config, false)
+        .attach(cors_options)
         .attach(logging::RocketLogger)
         .attach(banned::BanIpAddrs::default())
         .attach(ModifyResponseHeaders)
