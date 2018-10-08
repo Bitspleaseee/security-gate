@@ -53,7 +53,7 @@ fn main() {
 
     //Getting adress and port from env-variables if possible:
     let address = match std::env::var("SECURITY_GATE_ADDRESS") {
-        Ok(value) => value,
+        Ok(value) => value.to_string(),
         Err(_) => {
             warn!("SECURITY_GATE_ADDRESS is not set, using 'localhost'");
             "localhost".to_string()
@@ -61,7 +61,7 @@ fn main() {
     };
 
     let port = match std::env::var("SECURITY_GATE_PORT") {
-        Ok(value) => value,
+        Ok(value) => value.to_string(),
         Err(_) => {
             warn!("SECURITY_GATE_PORT is not set, using '9234'");
             "9234".to_string()
@@ -69,7 +69,7 @@ fn main() {
     };
 
     crate::comms::controller::CONTROLLER_IP = match std::env::var("CONTROLLER_ADDRESS") {
-        Ok(value) => value,
+        Ok(value) => value.to_string(),
         Err(_) => {
             warn!("CONTROLLER_ADDRESS is not set, using 'localhost:10000'");
             "localhost:10000".to_string()
@@ -77,7 +77,7 @@ fn main() {
     };
 
     crate::comms::auth::AUTH_IP = match std::env::var("AUTH_ADDRESS") {
-        Ok(value) => value,
+        Ok(value) => value.to_string(),
         Err(_) => {
             warn!("AUTH_ADDRESS is not set, using 'localhost:10001'");
             "localhost:10001".to_string()
@@ -87,7 +87,7 @@ fn main() {
     // Configuring rocket:
     let config = Config::build(Environment::Staging)
         .address(address)                                   // Set address
-        .port(port.parse::<i32>().unwrap_or(9234))          // Set port and be sure it is a number
+        .port(port.parse::<u16>().unwrap_or(9234))          // Set port and be sure it is a number
         .finalize()
         .expect("failed to instantiate config");
 
