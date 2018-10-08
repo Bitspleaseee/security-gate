@@ -10,6 +10,10 @@ use std::net::IpAddr;
 use std::sync::Arc;
 use std::sync::RwLock;
 
+use std::collections::HashMap;
+use chrono::prelude::*;
+use chrono::Duration;
+
 use datatypes::admin::requests::AdminRequest;
 use datatypes::admin::responses::AdminSuccess;
 use datatypes::error::ResponseError;
@@ -21,10 +25,33 @@ use datatypes::payloads::TokenPayload;
 use crate::JsonResponseResult;
 use crate::auth::connect_to_auth;
 
+const REQUEST_LIMIT: u32 = 40;
+
+pub struct Count {
+    pub count: u32,
+    pub time: DateTime<Utc>
+}
+
+impl Count {
+    pub fn new(time: DateTime<Utc>) -> Count {
+        Count { count: 0, time }
+    }
+    pub fn count(&mut self, time: DateTime<Utc>) -> u32 {
+        if time == self.time {
+            self.count = self.count + 1;
+        } else {
+            self.time = time;
+            self.count = 1;
+        }
+        self.count
+    }
+}
+
 // Define blacklist:
 #[derive(Default)]
 pub struct BanIpAddrs {
     banned_ips: Arc<RwLock<HashSet<IpAddr>>>,
+    pub map: Arc<RwLock<HashMap<IpAddr, Count>>>,
 }
 
 // Be sure blacklist is added "globally" (on_attach) and is checked on every response (on_request).
@@ -53,28 +80,79 @@ impl Fairing for BanIpAddrs {
                 return;
             }
         };
+        {
+            let banned_ips = match self.banned_ips.read() {
+                Ok(banned_ips) => banned_ips,
+                Err(e) => {
+                    error!(
+                        "internal error occured when trying to read
+                        'banned_ips': {}",
+                        e
+                    );
+                    return;
+                }
+            };
 
-        let banned_ips = match self.banned_ips.read() {
-            Ok(banned_ips) => banned_ips,
-            Err(e) => {
-                error!(
-                    "internal error occured when trying to read
-                       'banned_ips': {}",
-                    e
+            if banned_ips.contains(&addr.ip()) {
+                info!(
+                    "[{}] {} {}: IP banned, sent to /banned",
+                    addr,
+                    req.method(),
+                    req.uri()
                 );
+                req.set_uri("/banned"); // If banned, redirect to banned-page.
+                return;
+            }
+        }
+
+        // Request couter
+
+        let mut map = match self.map.write() {
+            Ok(map) => map,
+            Err(e) => {
+                error!("Error reading map : {}",e );
                 return;
             }
         };
+        
 
-        if banned_ips.contains(&addr.ip()) {
-            info!(
-                "[{}] {} {}: IP banned, sent to /banned",
-                addr,
-                req.method(),
-                req.uri()
-            );
-            req.set_uri("/banned"); // If banned, redirect to banned-page.
-        }
+        let mut time_now: DateTime<Utc> = Utc::now();
+        info!("time: {}", time_now);
+
+        let sec = time_now.time().second();
+        let nano = time_now.time().nanosecond();
+
+        let floor_sec = (sec/10) * 10;
+        let offset = sec - floor_sec;
+
+        time_now = time_now - Duration::seconds(offset.into());
+        time_now = time_now - Duration::nanoseconds(nano.into());
+
+        info!("time: {}", time_now);
+
+        let ip = addr.ip();
+
+        match map.get_mut(&ip) {
+            Some(counter) => {
+                let c = counter.count(time_now);
+                info!("count: {}", c);
+
+                if c > REQUEST_LIMIT {
+                    match self.banned_ips.write() {
+                        Ok(mut banned_ips) => {
+                            banned_ips.insert(ip); 
+                            ()
+                        },
+                        Err(e) => error!("Error writing to banned_ips: {}", e),
+                    };
+                    req.set_uri("/banned");
+                }
+            },
+            None => {
+                map.insert(ip, Count::new(time_now));
+                ()
+            },
+        };
     }
 }
 
