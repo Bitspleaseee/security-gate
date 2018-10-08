@@ -68,20 +68,6 @@ fn main() {
         }
     };
 
-    match std::env::var("CONTROLLER_ADDRESS") {
-        Ok(value) => crate::comms::controller::CONTROLLER_IP = &value,
-        Err(_) => {
-            warn!("CONTROLLER_ADDRESS is not set, using {}", crate::comms::controller::CONTROLLER_IP);
-        }
-    };
-
-   match std::env::var("AUTH_ADDRESS") {
-        Ok(value) => crate::comms::auth::AUTH_IP = &value,
-        Err(_) => {
-            warn!("AUTH_ADDRESS is not set, using '{}'", crate::comms::auth::AUTH_IP);
-        }
-    };
-
     // Configuring rocket:
     let config = Config::build(Environment::Staging)
         .address(address)                                   // Set address
