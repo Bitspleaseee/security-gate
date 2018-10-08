@@ -129,7 +129,7 @@ pub fn post_admin(
     let role = connect_to_auth()
         .map_err(Json)?
         .get_user_role(TokenPayload::new(None, token))
-        .map_err(Json)?;
+        .map_err(|e| Json(e.into()))?;
     
     // Only admins can do something here (return with error if not admin)
     if role < Role::Admin {
