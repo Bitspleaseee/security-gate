@@ -15,6 +15,7 @@ use datatypes::admin::responses::AdminSuccess;
 use datatypes::error::ResponseError;
 use datatypes::valid::token::Token;
 use datatypes::auth::responses::*;
+use datatypes::payloads::TokenPayload;
 
 use crate::JsonResponseResult;
 use crate::auth::connect_to_auth;
