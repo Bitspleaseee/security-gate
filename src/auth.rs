@@ -15,12 +15,12 @@ use crate::JsonResponseResult;
 
 
 lazy_static! {
-    static ref AUTH_IP: str =
+    static ref AUTH_IP: String =
         match std::env::var("AUTH_ADDRESS") {
-            Ok(value) => &value,
+            Ok(value) => value.to_string(),
             Err(_) => {
                 warn!("AUTH_ADDRESS is not set, using 'localhost:10001'");
-                "localhost:10001"
+                "localhost:10001".to_string()
             }
     };
 }
