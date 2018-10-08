@@ -10,6 +10,7 @@
     clippy::implicit_hasher
 )]
 
+#[macro_use]
 extern crate lazy_static;
 extern crate regex;
 extern crate rocket;
