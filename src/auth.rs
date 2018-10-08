@@ -4,15 +4,26 @@ use rocket_contrib::Json;
 use tarpc::sync::client::{ClientExt, Options};
 
 use datatypes::auth::requests::AuthRequest;
-use datatypes::auth::responses::AuthSuccess;
+use datatypes::auth::responses::{AuthSuccess, AuthError};
 use datatypes::error::ResponseError;
 use datatypes::payloads::TokenPayload;
 use datatypes::valid::token::USER_TOKEN_NAME;
 
 use crate::comms::auth::SyncClient as AuthClient;
-use crate::comms::auth::AUTH_IP;
 
 use crate::JsonResponseResult;
+
+
+lazy_static! {
+    static ref AUTH_IP: &'static str =
+        match std::env::var("AUTH_ADDRESS") {
+            Ok(value) => value.as_str(),
+            Err(_) => {
+                warn!("AUTH_ADDRESS is not set, using 'localhost:10001'");
+                "localhost:10001"
+            }
+    };
+}
 
 // Connect to authentication service
 pub fn connect_to_auth() -> Result<AuthClient, ResponseError> {
@@ -67,8 +78,10 @@ pub fn connect_to_auth() -> Result<AuthClient, ResponseError> {
 ///
 /// The possible types are defined in [`AuthError`](../responses/enum.AuthError.html)
 #[post("/auth", format = "application/json", data = "<req>")]
-pub fn auth(mut cookies: Cookies, req: Json<AuthRequest>) -> JsonResponseResult<AuthSuccess> {
+pub fn auth(mut cookies: Cookies, req: Option<Json<AuthRequest>>) -> JsonResponseResult<AuthSuccess> {
     use datatypes::auth::requests::AuthRequest::*;
+
+    let req = req.ok_or(AuthError::InvalidCredentials).map_err(|e| Json(e.into()))?;           // If invalid request query.
 
     match req.into_inner() {
         Authenticate(p) => {

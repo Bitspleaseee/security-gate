@@ -17,7 +17,17 @@ use datatypes::valid::token::Token;
 
 use crate::auth::connect_to_auth;
 use crate::comms::controller::SyncClient as ControllerClient;
-use crate::comms::controller::CONTROLLER_IP;
+
+lazy_static! {
+    static ref CONTROLLER_IP: &'static str =
+        match std::env::var("CONTROLLER_ADDRESS") {
+            Ok(value) => value.as_str(),
+            Err(_) => {
+                warn!("CONTROLLER_ADDRESS is not set, using 'localhost:10000'");
+                "localhost:10000"
+            }
+    };
+}
 
 fn connect_to_controller() -> Result<ControllerClient, ResponseError> {
     ControllerClient::connect(CONTROLLER_IP, Options::default()).map_err(|e| {
@@ -95,7 +105,9 @@ fn static_file(file: PathBuf) -> Option<NamedFile> {
 /// }
 /// ´´´
 #[get("/search?<search_form>")]
-fn search(search_form: SearchForm, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
+fn search(search_form: Option<SearchForm>, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
+    let search_form = search_form.ok_or(ContentError::InvalidSearchQuery).map_err(|e| Json(e.into()))?;           // If invalid query.
+    
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
     let include_hidden: bool = is_admin_or_mod(opt_token).map_err(|e| Json(e))?;
     let search_req: SearchPayload = SearchPayload {
@@ -169,7 +181,9 @@ impl Into<SearchPayload> for SearchForm {
 /// }
 /// ´´´
 #[get("/category/<id>")]
-fn get_category(id: CategoryId, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
+fn get_category(id: Option<CategoryId>, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
+    let id = id.ok_or(ContentError::InvalidId).map_err(|e| Json(e.into()))?;           // If invalid id.
+    
     info!("Requesting category with id {}", id);
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
@@ -268,9 +282,11 @@ fn get_categories(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess
 /// Get the threads of a specific category
 #[get("/category/<id>/threads")]
 fn get_threads_category(
-    id: CategoryId,
+    id: Option<CategoryId>,
     opt_token: Option<Token>,
 ) -> JsonResponseResult<ContentSuccess> {
+    let id = id.ok_or(ContentError::InvalidId).map_err(|e| Json(e.into()))?;           // If invalid id give error.
+
     info!("Requesting all threads from category with id {:?}", id);
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
@@ -326,7 +342,9 @@ fn get_threads_category(
 ///     }
 /// }
 #[get("/thread/<id>")]
-fn get_thread(id: ThreadId, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
+fn get_thread(id: Option<ThreadId>, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
+    let id = id.ok_or(ContentError::InvalidId).map_err(|e| Json(e.into()))?;           // If invalid id, give error.
+    
     info!("Getting thread with id {:?}", id);
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
@@ -369,9 +387,11 @@ fn get_threads(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
 /// Get a threads comments.
 #[get("/thread/<id>/comments")]
 fn get_comments_in_thread(
-    id: ThreadId,
+    id: Option<ThreadId>,
     opt_token: Option<Token>,
 ) -> JsonResponseResult<ContentSuccess> {
+    let id = id.ok_or(ContentError::InvalidId).map_err(|e| Json(e.into()))?;           // If invalid id, give error.
+
     info!("Requesting all comments from thread with id {:?}", id);
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
@@ -425,7 +445,9 @@ fn get_comments_in_thread(
 ///     }
 /// }
 #[get("/comment/<id>")]
-fn get_comment(id: CommentId, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
+fn get_comment(id: Option<CommentId>, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
+    let id = id.ok_or(ContentError::InvalidId).map_err(|e| Json(e.into()))?;           // If invalid id, give error.
+
     info!("Requesting comment with id {:?}", id);
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
@@ -455,7 +477,6 @@ fn get_comments(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> 
 
     connect_to_controller()
         .map_err(Json)?
-        // TODO rename to 'get_comments'
         .get_all_comments(hidden_payload)
         .map(|v| {
             info!("Returning success from 'get-comments' request");
@@ -502,7 +523,9 @@ fn get_comments(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> 
 ///         }
 /// }
 #[get("/user/<id>")]
-fn get_user(id: UserId) -> JsonResponseResult<ContentSuccess> {
+fn get_user(id: Option<UserId>) -> JsonResponseResult<ContentSuccess> {
+    let id = id.ok_or(ContentError::InvalidId).map_err(|e| Json(e.into()))?;           // If invalid id give error.
+
     info!("Requesting user with id {:?}", id);
 
     let user_payload = GetUserPayload { id };
@@ -575,8 +598,10 @@ fn get_user(id: UserId) -> JsonResponseResult<ContentSuccess> {
 ///}
 /// ´´´
 #[post("/content", format = "application/json", data = "<req>")]
-pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResult<ContentSuccess> {
+pub fn post_content(token: Token, req: Option<Json<ContentRequest>>) -> JsonResponseResult<ContentSuccess> {
     use datatypes::content::requests::ContentRequest::*;
+
+    let req = req.ok_or(ContentError::InvalidContent).map_err(|e| Json(e.into()))?;           // If invalid request give error.
 
     // Check what role the user has (and that a user is valid):
     let role = connect_to_auth()
