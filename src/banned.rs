@@ -15,6 +15,7 @@ use datatypes::admin::responses::AdminSuccess;
 use datatypes::error::ResponseError;
 use datatypes::valid::token::Token;
 use datatypes::auth::responses::*;
+use datatypes::content::responses::*;
 use datatypes::payloads::TokenPayload;
 
 use crate::JsonResponseResult;
@@ -119,7 +120,7 @@ pub fn post_admin(
     banned_ips: State<Arc<RwLock<HashSet<IpAddr>>>>,
 ) -> JsonResponseResult<AdminSuccess> {
     let req = req.ok_or(ContentError::InvalidContent).map_err(Json)?;           // If invalid request give error.
-    
+
     // Check what role the user has (and that a user is valid):
     let role = connect_to_auth()
         .map_err(Json)?

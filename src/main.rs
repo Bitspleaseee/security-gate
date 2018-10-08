@@ -69,18 +69,18 @@ fn main() {
     };
 
     crate::comms::controller::CONTROLLER_IP = match std::env::var("CONTROLLER_ADDRESS") {
-        Ok(value) => value.to_string(),
+        Ok(value) => value,
         Err(_) => {
             warn!("CONTROLLER_ADDRESS is not set, using 'localhost:10000'");
-            "localhost:10000".to_string()
+            "localhost:10000"
         }
     };
 
     crate::comms::auth::AUTH_IP = match std::env::var("AUTH_ADDRESS") {
-        Ok(value) => value.to_string(),
+        Ok(value) => value,
         Err(_) => {
             warn!("AUTH_ADDRESS is not set, using 'localhost:10001'");
-            "localhost:10001".to_string()
+            "localhost:10001"
         }
     };
 

@@ -4,7 +4,7 @@ use rocket_contrib::Json;
 use tarpc::sync::client::{ClientExt, Options};
 
 use datatypes::auth::requests::AuthRequest;
-use datatypes::auth::responses::AuthSuccess;
+use datatypes::auth::responses::{AuthSuccess, AuthError};
 use datatypes::error::ResponseError;
 use datatypes::payloads::TokenPayload;
 use datatypes::valid::token::USER_TOKEN_NAME;
