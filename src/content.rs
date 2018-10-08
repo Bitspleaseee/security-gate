@@ -19,7 +19,7 @@ use crate::auth::connect_to_auth;
 use crate::comms::controller::SyncClient as ControllerClient;
 
 lazy_static! {
-    static ref CONTROLLER_IP =
+    static ref CONTROLLER_IP: &str =
         match std::env::var("CONTROLLER_ADDRESS") {
             Ok(value) => &value,
             Err(_) => {
