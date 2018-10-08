@@ -29,6 +29,7 @@ fn connect_to_controller() -> Result<ControllerClient, ResponseError> {
 fn is_admin_or_mod(token: Token) -> bool {
     let role = connect_to_auth()
         .map_err(Json)
+        .unwrap_or(false)
         .get_user_role(TokenPayload::new (None,token))
         .map_err(Json);
     let role = role.unwrap_or(Role::User);
