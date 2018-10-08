@@ -17,7 +17,17 @@ use datatypes::valid::token::Token;
 
 use crate::auth::connect_to_auth;
 use crate::comms::controller::SyncClient as ControllerClient;
-use crate::comms::controller::CONTROLLER_IP;
+
+lazy_static! {
+    static ref CONTROLLER_IP =
+        match std::env::var("CONTROLLER_ADDRESS") {
+            Ok(value) => &value,
+            Err(_) => {
+                warn!("CONTROLLER_ADDRESS is not set, using 'localhost:10000'");
+                "localhost:10000"
+            }
+    };
+}
 
 fn connect_to_controller() -> Result<ControllerClient, ResponseError> {
     ControllerClient::connect(CONTROLLER_IP, Options::default()).map_err(|e| {

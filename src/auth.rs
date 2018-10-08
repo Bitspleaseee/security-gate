@@ -10,9 +10,20 @@ use datatypes::payloads::TokenPayload;
 use datatypes::valid::token::USER_TOKEN_NAME;
 
 use crate::comms::auth::SyncClient as AuthClient;
-use crate::comms::auth::AUTH_IP;
 
 use crate::JsonResponseResult;
+
+
+lazy_static! {
+    static ref AUTH_IP =
+        match std::env::var("AUTH_ADDRESS") {
+            Ok(value) => &value,
+            Err(_) => {
+                warn!("AUTH_ADDRESS is not set, using 'localhost:10001'");
+                "localhost:10001"
+            }
+    };
+}
 
 // Connect to authentication service
 pub fn connect_to_auth() -> Result<AuthClient, ResponseError> {

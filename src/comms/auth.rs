@@ -3,8 +3,6 @@ use datatypes::auth::responses::*;
 use datatypes::payloads::*;
 use datatypes::valid::token::Token;
 
-pub static mut AUTH_IP: &str = "localhost:10001";
-
 service! {
     rpc authenticate(payload: AuthPayload) -> Token | AuthError;
     rpc deauthenticate(payload: TokenPayload<EmptyPayload>) -> () | AuthError;
