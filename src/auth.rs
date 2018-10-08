@@ -1,5 +1,5 @@
-use rocket_contrib::Json;
 use rocket::http::{Cookie, Cookies};
+use rocket_contrib::Json;
 
 use std::net::SocketAddr;
 use tarpc::sync::client::{ClientExt, Options};
@@ -97,7 +97,7 @@ pub fn auth(
                 .map(|token| {
                     info!("User '{}' authenticated successfully", &username);
 
-                    let mut cookie = Cookie::new(USER_TOKEN_NAME, token.as_ref().to_owned());
+                    let mut cookie: Cookie = token.into();
                     cookie.set_http_only(true);
                     cookies.add(cookie);
 
