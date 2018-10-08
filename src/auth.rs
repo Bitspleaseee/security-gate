@@ -8,7 +8,7 @@ use datatypes::auth::responses::{AuthSuccess, AuthError};
 use datatypes::error::ResponseError;
 use datatypes::payloads::TokenPayload;
 use datatypes::valid::token::USER_TOKEN_NAME;
-use std::net::SocketAddr;
+use
 
 use crate::comms::auth::SyncClient as AuthClient;
 
@@ -18,12 +18,12 @@ use crate::JsonResponseResult;
 lazy_static! {
     static ref AUTH_IP: SocketAddr =
         match std::env::var("AUTH_ADDRESS") {
-            Ok(value) => value,
+            Ok(value) => value.as_str(),
             Err(_) => {
                 warn!("AUTH_ADDRESS is not set, using 'localhost:10001'");
                 "localhost:10001"
-            }.parse().expect("Invalid formatted AUTH_ADDRESS")
-    };
+            }
+    }.parse().expect("Invalid formatted AUTH_ADDRESS");
 }
 
 // Connect to authentication service
