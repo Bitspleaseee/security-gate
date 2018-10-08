@@ -91,12 +91,8 @@ fn main() {
         .finalize()
         .expect("failed to instantiate config");
 
-    // Setup cors
-    let (allowed_origins, _) = AllowedOrigins::some(&["http://localhost:8080"]);
-
-    // You can also deserialize this
     let cors_options = rocket_cors::Cors {
-        allowed_origins: allowed_origins,
+        allowed_origins: AllowedOrigins::all(),
         allowed_methods: vec![Method::Get, Method::Post]
             .into_iter()
             .map(From::from)
