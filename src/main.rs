@@ -58,7 +58,7 @@ fn main() {
             warn!("SECURITY_GATE_ADDRESS is not set, using 'localhost'");
             "localhost".to_string()
         }
-    }
+    };
 
     let port = match std::env::var("SECURITY_GATE_PORT") {
         Ok(value) => value,
@@ -66,7 +66,7 @@ fn main() {
             warn!("SECURITY_GATE_PORT is not set, using '9234'");
             "9234".to_string()
         }
-    }
+    };
 
     crate::comms::controller::CONTROLLER_IP = match std::env::var("CONTROLLER_ADDRESS") {
         Ok(value) => value,
@@ -74,7 +74,7 @@ fn main() {
             warn!("CONTROLLER_ADDRESS is not set, using 'localhost:10000'");
             "localhost:10000".to_string()
         }
-    }
+    };
 
     crate::comms::auth::AUTH_IP = match std::env::var("AUTH_ADDRESS") {
         Ok(value) => value,
@@ -82,7 +82,7 @@ fn main() {
             warn!("AUTH_ADDRESS is not set, using 'localhost:10001'");
             "localhost:10001".to_string()
         }
-    }
+    };
 
     // Configuring rocket:
     let config = Config::build(Environment::Staging)
