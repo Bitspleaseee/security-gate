@@ -1,4 +1,4 @@
-//! API-routes to manage content.
+﻿//! API-routes to manage content.
 use rocket::response::NamedFile;
 use rocket_contrib::Json;
 use std::path::{Path, PathBuf};
@@ -26,15 +26,15 @@ fn connect_to_controller() -> Result<ControllerClient, ResponseError> {
     })
 }
 
+// Check if user is admin or moderator
 fn is_admin_or_mod(token: Option<Token>) -> Result<bool, ResponseError> {
     token.map_or(Ok(false), |t| {
         Ok(connect_to_auth()
             .map_err(|e| {
                 error!("Failed to connect to auth service: {:?}", e);
                 e
-            })?.get_user_role(TokenPayload::new(None, t))
-            .unwrap_or(Role::User)
-            <= Role::Moderator)
+            })?.get_user_role(TokenPayload::new(None, t))?
+            >= Role::Moderator)
     })
 }
 
@@ -582,14 +582,13 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
     let role = connect_to_auth()
         .map_err(Json)?
         .get_user_role(TokenPayload::new(None, token))
-        .map_err(Json)
-        .unwrap_or(Role::User);
+        .map_err(Json)?
 
     match req.into_inner() {
         AddCategory(p) => {
             // Relays what is sent back to the user
             // If not allowed to do this, return errormessage:
-            if role > Role::Moderator {
+            if role < Role::Moderator {
                 Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
             }
 
@@ -608,7 +607,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
         EditCategory(p) => {
             // Relays what is sent back to the user
             // If not allowed to do this, return errormessage:
-            if role > Role::Moderator {
+            if role < Role::Moderator {
                 Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
             }
 
@@ -627,7 +626,7 @@ pub fn post_content(token: Token, req: Json<ContentRequest>) -> JsonResponseResu
         HideCategory(p) => {
             // Relays what is sent back to the user
             // If not allowed to do this, return errormessage:
-            if role > Role::Admin {
+            if role < Role::Admin {
                 Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
             }
 

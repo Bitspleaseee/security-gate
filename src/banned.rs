@@ -122,6 +122,17 @@ pub fn post_admin(
     //    Json(e)
     //})?;
 
+    // Check what role the user has (and that a user is valid):
+    let role = connect_to_auth()
+        .map_err(Json)?
+        .get_user_role(TokenPayload::new(None, token))
+        .map_err(Json)?
+    
+    // Only admins can do something here (return with error if not admin)
+    if role < Role::Admin {
+        Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
+    }
+
     use datatypes::admin::requests::AdminRequest::*;
     match req.into_inner() {
         BanIp(p) => {
