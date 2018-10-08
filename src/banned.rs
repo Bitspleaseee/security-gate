@@ -19,7 +19,6 @@ use datatypes::admin::responses::AdminSuccess;
 use datatypes::auth::responses::*;
 use datatypes::content::responses::*;
 use datatypes::error::ResponseError;
-use datatypes::payloads::TokenPayload;
 use datatypes::valid::token::Token;
 
 use crate::auth::connect_to_auth;
@@ -116,7 +115,7 @@ impl Fairing for BanIpAddrs {
         };
 
         let mut time_now: DateTime<Utc> = Utc::now();
-        info!("time: {}", time_now);
+        trace!("time: {}", time_now);
 
         let sec = time_now.time().second();
         let nano = time_now.time().nanosecond();
@@ -127,7 +126,7 @@ impl Fairing for BanIpAddrs {
         time_now = time_now - Duration::seconds(offset.into());
         time_now = time_now - Duration::nanoseconds(nano.into());
 
-        info!("time: {}", time_now);
+        trace!("time: {}", time_now);
 
         let ip = addr.ip();
 
@@ -203,7 +202,7 @@ pub fn post_admin(
     // Check what role the user has (and that a user is valid):
     let role = connect_to_auth()
         .map_err(Json)?
-        .get_user_role(TokenPayload::new(None, token))
+        .get_user_role(token)
         .map_err(|e| Json(e.into()))?;
 
     // Only admins can do something here (return with error if not admin)

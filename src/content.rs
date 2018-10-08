@@ -1,16 +1,14 @@
 //! API-routes to manage content.
 use rocket::response::NamedFile;
 use rocket_contrib::Json;
-use std::net::SocketAddr;
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::path::{Path, PathBuf};
 use tarpc::sync::client::{ClientExt, Options};
-use tarpc::util::FirstSocketAddr;
 
 use datatypes::auth::responses::*;
 use datatypes::content::requests::*;
 use datatypes::content::responses::*;
 use datatypes::error::ResponseError;
-use datatypes::payloads::TokenPayload;
 use datatypes::valid::fields::*;
 use datatypes::valid::ids::*;
 use datatypes::valid::token::Token;
@@ -21,13 +19,12 @@ use crate::JsonResponseResult;
 
 lazy_static! {
     static ref CONTROLLER_IP: SocketAddr = match std::env::var("CONTROLLER_ADDRESS") {
-        Ok(value) => value,
+        Ok(value) => value.parse().expect("Invalid formatted CONTROLLER_ADDRESS"),
         Err(_) => {
-            warn!("CONTROLLER_ADDRESS is not set, using 'localhost:10000'");
-            "localhost:10000".to_string()
+            warn!("CONTROLLER_ADDRESS is not set, using '127.0.0.1:10000'");
+            SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 10000)
         }
-    }.try_first_socket_addr()
-    .expect("Invalid formatted CONTROLLER_ADDRESS");
+    };
 }
 
 fn connect_to_controller() -> Result<ControllerClient, ResponseError> {
@@ -44,7 +41,7 @@ fn is_admin_or_mod(token: Option<Token>) -> Result<bool, ResponseError> {
             .map_err(|e| {
                 error!("Failed to connect to auth service: {:?}", e);
                 e
-            })?.get_user_role(TokenPayload::new(None, t))?
+            })?.get_user_role(t)?
             >= Role::Moderator)
     })
 }
@@ -635,10 +632,12 @@ pub fn post_content(
         .ok_or(ContentError::InvalidContent)
         .map_err(|e| Json(e.into()))?; // If invalid request give error.
 
+    info!("received json request: {:?}", req);
+
     // Check what role the user has (and that a user is valid):
     let role = connect_to_auth()
         .map_err(Json)?
-        .get_user_role(TokenPayload::new(None, token))
+        .get_user_role(token)
         .map_err(|e| Json(e.into()))?;
 
     match req.into_inner() {

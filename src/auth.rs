@@ -2,13 +2,12 @@ use rocket::http::{Cookie, Cookies};
 use rocket_contrib::Json;
 
 use std::net::SocketAddr;
+use std::net::{IpAddr, Ipv4Addr};
 use tarpc::sync::client::{ClientExt, Options};
-use tarpc::util::FirstSocketAddr;
 
 use datatypes::auth::requests::AuthRequest;
 use datatypes::auth::responses::{AuthError, AuthSuccess};
 use datatypes::error::ResponseError;
-use datatypes::payloads::TokenPayload;
 use datatypes::valid::token::USER_TOKEN_NAME;
 
 use crate::comms::auth::SyncClient as AuthClient;
@@ -16,13 +15,12 @@ use crate::JsonResponseResult;
 
 lazy_static! {
     static ref AUTH_IP: SocketAddr = match std::env::var("AUTH_ADDRESS") {
-        Ok(value) => value,
+        Ok(value) => value.parse().expect("Invalid formatted AUTH_ADDRESS"),
         Err(_) => {
             warn!("AUTH_ADDRESS is not set, using 'localhost:10001'");
-            "localhost:10001".to_string()
+            SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 10001)
         }
-    }.try_first_socket_addr()
-    .expect("Invalid formatted AUTH_ADDRESS");
+    };
 }
 
 // Connect to authentication service
@@ -97,9 +95,7 @@ pub fn auth(
                 .map(|token| {
                     info!("User '{}' authenticated successfully", &username);
 
-                    let mut cookie: Cookie = token.into();
-                    cookie.set_http_only(true);
-                    cookies.add_private(cookie);
+                    cookies.add_private(token.into());
 
                     Json(AuthSuccess::Authenticated)
                 }).map_err(|e| {
@@ -114,7 +110,7 @@ pub fn auth(
 
             connect_to_auth()
                 .map_err(Json)?
-                .deauthenticate(TokenPayload::new(None, cookie.clone()))
+                .deauthenticate(cookie.clone().into())
                 .map(|_| {
                     info!("User deauthenticated successfully");
                     cookies.remove_private(cookie);
