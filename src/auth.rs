@@ -15,7 +15,7 @@ use crate::JsonResponseResult;
 
 
 lazy_static! {
-    static ref AUTH_IP: &str =
+    static ref AUTH_IP: &'static str =
         match std::env::var("AUTH_ADDRESS") {
             Ok(value) => value,
             Err(_) => {
