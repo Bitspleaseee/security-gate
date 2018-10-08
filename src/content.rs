@@ -380,7 +380,7 @@ fn get_comments_in_thread(
     id: Option<ThreadId>,
     opt_token: Option<Token>,
 ) -> JsonResponseResult<ContentSuccess> {
-    let id = id.ok_or(ContentError::InvalidId).map_err(Json)?;           // If invalid id, give error.
+    let id = id.ok_or(ContentError::InvalidId).map_err(|e| Json(e.into()))?;           // If invalid id, give error.
 
     info!("Requesting all comments from thread with id {:?}", id);
 
