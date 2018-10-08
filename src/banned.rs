@@ -10,26 +10,26 @@ use std::net::IpAddr;
 use std::sync::Arc;
 use std::sync::RwLock;
 
-use std::collections::HashMap;
 use chrono::prelude::*;
 use chrono::Duration;
+use std::collections::HashMap;
 
 use datatypes::admin::requests::AdminRequest;
 use datatypes::admin::responses::AdminSuccess;
-use datatypes::error::ResponseError;
-use datatypes::valid::token::Token;
 use datatypes::auth::responses::*;
 use datatypes::content::responses::*;
+use datatypes::error::ResponseError;
 use datatypes::payloads::TokenPayload;
+use datatypes::valid::token::Token;
 
-use crate::JsonResponseResult;
 use crate::auth::connect_to_auth;
+use crate::JsonResponseResult;
 
 const REQUEST_LIMIT: u32 = 40;
 
 pub struct Count {
     pub count: u32,
-    pub time: DateTime<Utc>
+    pub time: DateTime<Utc>,
 }
 
 impl Count {
@@ -110,11 +110,10 @@ impl Fairing for BanIpAddrs {
         let mut map = match self.map.write() {
             Ok(map) => map,
             Err(e) => {
-                error!("Error reading map : {}",e );
+                error!("Error reading map : {}", e);
                 return;
             }
         };
-        
 
         let mut time_now: DateTime<Utc> = Utc::now();
         info!("time: {}", time_now);
@@ -122,7 +121,7 @@ impl Fairing for BanIpAddrs {
         let sec = time_now.time().second();
         let nano = time_now.time().nanosecond();
 
-        let floor_sec = (sec/10) * 10;
+        let floor_sec = (sec / 10) * 10;
         let offset = sec - floor_sec;
 
         time_now = time_now - Duration::seconds(offset.into());
@@ -140,18 +139,18 @@ impl Fairing for BanIpAddrs {
                 if c > REQUEST_LIMIT {
                     match self.banned_ips.write() {
                         Ok(mut banned_ips) => {
-                            banned_ips.insert(ip); 
+                            banned_ips.insert(ip);
                             ()
-                        },
+                        }
                         Err(e) => error!("Error writing to banned_ips: {}", e),
                     };
                     req.set_uri("/banned");
                 }
-            },
+            }
             None => {
                 map.insert(ip, Count::new(time_now));
                 ()
-            },
+            }
         };
     }
 }
@@ -197,14 +196,16 @@ pub fn post_admin(
     req: Option<Json<AdminRequest>>,
     banned_ips: State<Arc<RwLock<HashSet<IpAddr>>>>,
 ) -> JsonResponseResult<AdminSuccess> {
-    let req = req.ok_or(ContentError::InvalidContent).map_err(|e| Json(e.into()))?;           // If invalid request give error.
+    let req = req
+        .ok_or(ContentError::InvalidContent)
+        .map_err(|e| Json(e.into()))?; // If invalid request give error.
 
     // Check what role the user has (and that a user is valid):
     let role = connect_to_auth()
         .map_err(Json)?
         .get_user_role(TokenPayload::new(None, token))
         .map_err(|e| Json(e.into()))?;
-    
+
     // Only admins can do something here (return with error if not admin)
     if role < Role::Admin {
         Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;

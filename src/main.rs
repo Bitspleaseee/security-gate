@@ -71,8 +71,8 @@ fn main() {
 
     // Configuring rocket:
     let config = Config::build(Environment::Staging)
-        .address(address)                                   // Set address
-        .port(port.parse::<u16>().unwrap_or(9234))          // Set port and be sure it is a number
+        .address(address) // Set address
+        .port(port.parse::<u16>().unwrap_or(9234)) // Set port and be sure it is a number
         .finalize()
         .expect("failed to instantiate config");
 

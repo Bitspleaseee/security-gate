@@ -1,10 +1,10 @@
-﻿//! API-routes to manage content.
+//! API-routes to manage content.
 use rocket::response::NamedFile;
 use rocket_contrib::Json;
+use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
 use tarpc::sync::client::{ClientExt, Options};
-
-use crate::JsonResponseResult;
+use tarpc::util::FirstSocketAddr;
 
 use datatypes::auth::responses::*;
 use datatypes::content::requests::*;
@@ -15,24 +15,23 @@ use datatypes::valid::fields::*;
 use datatypes::valid::ids::*;
 use datatypes::valid::token::Token;
 
-use std::net::SocketAddr;
-
 use crate::auth::connect_to_auth;
 use crate::comms::controller::SyncClient as ControllerClient;
+use crate::JsonResponseResult;
 
 lazy_static! {
-    static ref CONTROLLER_IP: SocketAddr =
-        match std::env::var("CONTROLLER_ADDRESS") {
-            Ok(value) => value.as_str(),
-            Err(_) => {
-                warn!("CONTROLLER_ADDRESS is not set, using 'localhost:10000'");
-                "localhost:10000"
-            }
-    }.parse().expect("Invalid formatted CONTROLLER_ADDRESS");
+    static ref CONTROLLER_IP: SocketAddr = match std::env::var("CONTROLLER_ADDRESS") {
+        Ok(value) => value,
+        Err(_) => {
+            warn!("CONTROLLER_ADDRESS is not set, using 'localhost:10000'");
+            "localhost:10000".to_string()
+        }
+    }.try_first_socket_addr()
+    .expect("Invalid formatted CONTROLLER_ADDRESS");
 }
 
 fn connect_to_controller() -> Result<ControllerClient, ResponseError> {
-    ControllerClient::connect(CONTROLLER_IP, Options::default()).map_err(|e| {
+    ControllerClient::connect(*CONTROLLER_IP, Options::default()).map_err(|e| {
         error!("Unable to connect to controller: {:?}", e);
         ResponseError::InternalServerError
     })
@@ -107,9 +106,14 @@ fn static_file(file: PathBuf) -> Option<NamedFile> {
 /// }
 /// ´´´
 #[get("/search?<search_form>")]
-fn search(search_form: Option<SearchForm>, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
-    let search_form = search_form.ok_or(ContentError::InvalidSearchQuery).map_err(|e| Json(e.into()))?;           // If invalid query.
-    
+fn search(
+    search_form: Option<SearchForm>,
+    opt_token: Option<Token>,
+) -> JsonResponseResult<ContentSuccess> {
+    let search_form = search_form
+        .ok_or(ContentError::InvalidSearchQuery)
+        .map_err(|e| Json(e.into()))?; // If invalid query.
+
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
     let include_hidden: bool = is_admin_or_mod(opt_token).map_err(|e| Json(e))?;
     let search_req: SearchPayload = SearchPayload {
@@ -183,9 +187,14 @@ impl Into<SearchPayload> for SearchForm {
 /// }
 /// ´´´
 #[get("/category/<id>")]
-fn get_category(id: Option<CategoryId>, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
-    let id = id.ok_or(ContentError::InvalidId).map_err(|e| Json(e.into()))?;           // If invalid id.
-    
+fn get_category(
+    id: Option<CategoryId>,
+    opt_token: Option<Token>,
+) -> JsonResponseResult<ContentSuccess> {
+    let id = id
+        .ok_or(ContentError::InvalidId)
+        .map_err(|e| Json(e.into()))?; // If invalid id.
+
     info!("Requesting category with id {}", id);
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
@@ -287,7 +296,9 @@ fn get_threads_category(
     id: Option<CategoryId>,
     opt_token: Option<Token>,
 ) -> JsonResponseResult<ContentSuccess> {
-    let id = id.ok_or(ContentError::InvalidId).map_err(|e| Json(e.into()))?;           // If invalid id give error.
+    let id = id
+        .ok_or(ContentError::InvalidId)
+        .map_err(|e| Json(e.into()))?; // If invalid id give error.
 
     info!("Requesting all threads from category with id {:?}", id);
 
@@ -344,9 +355,14 @@ fn get_threads_category(
 ///     }
 /// }
 #[get("/thread/<id>")]
-fn get_thread(id: Option<ThreadId>, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
-    let id = id.ok_or(ContentError::InvalidId).map_err(|e| Json(e.into()))?;           // If invalid id, give error.
-    
+fn get_thread(
+    id: Option<ThreadId>,
+    opt_token: Option<Token>,
+) -> JsonResponseResult<ContentSuccess> {
+    let id = id
+        .ok_or(ContentError::InvalidId)
+        .map_err(|e| Json(e.into()))?; // If invalid id, give error.
+
     info!("Getting thread with id {:?}", id);
 
     // If logged in as admin/mod, then include hidden elements in result, if not exclude hidden elements.
@@ -392,7 +408,9 @@ fn get_comments_in_thread(
     id: Option<ThreadId>,
     opt_token: Option<Token>,
 ) -> JsonResponseResult<ContentSuccess> {
-    let id = id.ok_or(ContentError::InvalidId).map_err(|e| Json(e.into()))?;           // If invalid id, give error.
+    let id = id
+        .ok_or(ContentError::InvalidId)
+        .map_err(|e| Json(e.into()))?; // If invalid id, give error.
 
     info!("Requesting all comments from thread with id {:?}", id);
 
@@ -447,8 +465,13 @@ fn get_comments_in_thread(
 ///     }
 /// }
 #[get("/comment/<id>")]
-fn get_comment(id: Option<CommentId>, opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> {
-    let id = id.ok_or(ContentError::InvalidId).map_err(|e| Json(e.into()))?;           // If invalid id, give error.
+fn get_comment(
+    id: Option<CommentId>,
+    opt_token: Option<Token>,
+) -> JsonResponseResult<ContentSuccess> {
+    let id = id
+        .ok_or(ContentError::InvalidId)
+        .map_err(|e| Json(e.into()))?; // If invalid id, give error.
 
     info!("Requesting comment with id {:?}", id);
 
@@ -526,7 +549,9 @@ fn get_comments(opt_token: Option<Token>) -> JsonResponseResult<ContentSuccess> 
 /// }
 #[get("/user/<id>")]
 fn get_user(id: Option<UserId>) -> JsonResponseResult<ContentSuccess> {
-    let id = id.ok_or(ContentError::InvalidId).map_err(|e| Json(e.into()))?;           // If invalid id give error.
+    let id = id
+        .ok_or(ContentError::InvalidId)
+        .map_err(|e| Json(e.into()))?; // If invalid id give error.
 
     info!("Requesting user with id {:?}", id);
 
@@ -600,10 +625,15 @@ fn get_user(id: Option<UserId>) -> JsonResponseResult<ContentSuccess> {
 ///}
 /// ´´´
 #[post("/content", format = "application/json", data = "<req>")]
-pub fn post_content(token: Token, req: Option<Json<ContentRequest>>) -> JsonResponseResult<ContentSuccess> {
+pub fn post_content(
+    token: Token,
+    req: Option<Json<ContentRequest>>,
+) -> JsonResponseResult<ContentSuccess> {
     use datatypes::content::requests::ContentRequest::*;
 
-    let req = req.ok_or(ContentError::InvalidContent).map_err(|e| Json(e.into()))?;           // If invalid request give error.
+    let req = req
+        .ok_or(ContentError::InvalidContent)
+        .map_err(|e| Json(e.into()))?; // If invalid request give error.
 
     // Check what role the user has (and that a user is valid):
     let role = connect_to_auth()

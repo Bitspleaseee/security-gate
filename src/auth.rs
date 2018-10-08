@@ -1,34 +1,33 @@
 use rocket::http::Cookies;
 use rocket_contrib::Json;
 
+use std::net::SocketAddr;
 use tarpc::sync::client::{ClientExt, Options};
+use tarpc::util::FirstSocketAddr;
 
 use datatypes::auth::requests::AuthRequest;
-use datatypes::auth::responses::{AuthSuccess, AuthError};
+use datatypes::auth::responses::{AuthError, AuthSuccess};
 use datatypes::error::ResponseError;
 use datatypes::payloads::TokenPayload;
 use datatypes::valid::token::USER_TOKEN_NAME;
-use
 
 use crate::comms::auth::SyncClient as AuthClient;
-
 use crate::JsonResponseResult;
 
-
 lazy_static! {
-    static ref AUTH_IP: SocketAddr =
-        match std::env::var("AUTH_ADDRESS") {
-            Ok(value) => value.as_str(),
-            Err(_) => {
-                warn!("AUTH_ADDRESS is not set, using 'localhost:10001'");
-                "localhost:10001"
-            }
-    }.parse().expect("Invalid formatted AUTH_ADDRESS");
+    static ref AUTH_IP: SocketAddr = match std::env::var("AUTH_ADDRESS") {
+        Ok(value) => value,
+        Err(_) => {
+            warn!("AUTH_ADDRESS is not set, using 'localhost:10001'");
+            "localhost:10001".to_string()
+        }
+    }.try_first_socket_addr()
+    .expect("Invalid formatted AUTH_ADDRESS");
 }
 
 // Connect to authentication service
 pub fn connect_to_auth() -> Result<AuthClient, ResponseError> {
-    AuthClient::connect(AUTH_IP, Options::default()).map_err(|e| {
+    AuthClient::connect(*AUTH_IP, Options::default()).map_err(|e| {
         error!("Unable to connect to authentication-service: {:?}", e);
         ResponseError::InternalServerError
     })
@@ -79,10 +78,15 @@ pub fn connect_to_auth() -> Result<AuthClient, ResponseError> {
 ///
 /// The possible types are defined in [`AuthError`](../responses/enum.AuthError.html)
 #[post("/auth", format = "application/json", data = "<req>")]
-pub fn auth(mut cookies: Cookies, req: Option<Json<AuthRequest>>) -> JsonResponseResult<AuthSuccess> {
+pub fn auth(
+    mut cookies: Cookies,
+    req: Option<Json<AuthRequest>>,
+) -> JsonResponseResult<AuthSuccess> {
     use datatypes::auth::requests::AuthRequest::*;
 
-    let req = req.ok_or(AuthError::InvalidCredentials).map_err(|e| Json(e.into()))?;           // If invalid request query.
+    let req = req
+        .ok_or(AuthError::InvalidCredentials)
+        .map_err(|e| Json(e.into()))?; // If invalid request query.
 
     match req.into_inner() {
         Authenticate(p) => {
