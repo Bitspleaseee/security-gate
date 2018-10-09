@@ -1,8 +1,6 @@
 use datatypes::content::requests::*;
 use datatypes::content::responses::*;
 
-pub static mut CONTROLLER_IP: &str = "localhost:10000";
-
 service! {
     rpc get_user(payload: GetUserPayload) -> UserPayload | ContentError;
     rpc add_user(payload: AddUserPayload) -> UserPayload | ContentError;
