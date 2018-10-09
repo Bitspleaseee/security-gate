@@ -1,4 +1,4 @@
-use rocket::http::{Cookie, Cookies};
+use rocket::http::Cookies;
 use rocket_contrib::Json;
 
 use std::convert::TryInto;
@@ -32,6 +32,7 @@ lazy_static! {
 
 // Connect to authentication service
 pub fn connect_to_auth() -> Result<AuthClient, ResponseError> {
+    trace!("Connecting to '{}' to perform auth request", *AUTH_IP);
     AuthClient::connect(*AUTH_IP, Options::default()).map_err(|e| {
         error!("Unable to connect to authentication-service: {:?}", e);
         ResponseError::InternalServerError
@@ -154,9 +155,9 @@ pub fn create_admin() {
 
     println!("Creating admin account");
 
-    let mut username = "username".to_string().try_into().unwrap();
-    let mut email = "user@name.com".to_string().try_into().unwrap();
-    let mut password = "Password1".to_string().try_into().unwrap();
+    let username;
+    let email;
+    let password;
 
     println!("Username: ");
     loop {

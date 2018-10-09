@@ -53,7 +53,7 @@ fn is_admin_or_mod(token: Option<Token>) -> Result<bool, ResponseError> {
 /// Get the main webpage
 ///
 /// This function returns the content of the webpage as html/css/javascript.
-#[get("/")]
+#[get("/", format = "text/html")]
 fn index() -> Option<NamedFile> {
     NamedFile::open("static/index.html").ok()
 }
@@ -61,7 +61,7 @@ fn index() -> Option<NamedFile> {
 /// Get static files (.html, .css, .js, images etc.)
 ///
 /// This function returns the content of the webpage given in file as html/css/javascript.
-#[get("/static/<file..>")]
+#[get("/<file..>", rank = 2)]
 fn static_file(file: PathBuf) -> Option<NamedFile> {
     NamedFile::open(Path::new("static/").join(file)).ok()
 }
