@@ -7,10 +7,12 @@ use tarpc::sync::client::{ClientExt, Options};
 
 use datatypes::auth::requests::AuthRequest;
 use datatypes::auth::responses::{AuthError, AuthSuccess};
+use datatypes::content::responses::*;
 use datatypes::error::ResponseError;
 use datatypes::valid::token::USER_TOKEN_NAME;
 
 use crate::comms::auth::SyncClient as AuthClient;
+use crate::content::connect_to_controller;
 use crate::JsonResponseResult;
 
 lazy_static! {
@@ -121,17 +123,22 @@ pub fn auth(
                 })
         }
         RegisterUser(p) => {
-            let username = p.username.clone();
-            connect_to_auth()
+            let user = connect_to_auth().map_err(Json)?.register(p).map_err(|e| {
+                error!("Auth: Unable to 'register': {:?}", e);
+                Json(e.into())
+            })?;
+            debug!("Auth: user registerd successfully");
+
+            let _user = connect_to_controller()
                 .map_err(Json)?
-                .register(p)
-                .map(|_| {
-                    info!("User '{}' registered successfully", &username);
-                    Json(AuthSuccess::UserRegistered)
-                }).map_err(|e| {
-                    error!("Unable to 'register': {:?}", e);
+                .add_user(user)
+                .map_err(|e| {
+                    error!("Controller: Unable to add user: {:?}", e);
                     Json(e.into())
-                })
+                })?;
+
+            debug!("Controller: Returning success from 'add_user' request");
+            Ok(Json(AuthSuccess::UserRegistered))
         }
     }
 }

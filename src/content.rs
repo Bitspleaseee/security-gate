@@ -27,7 +27,7 @@ lazy_static! {
     };
 }
 
-fn connect_to_controller() -> Result<ControllerClient, ResponseError> {
+pub fn connect_to_controller() -> Result<ControllerClient, ResponseError> {
     ControllerClient::connect(*CONTROLLER_IP, Options::default()).map_err(|e| {
         error!("Unable to connect to controller: {:?}", e);
         ResponseError::InternalServerError
