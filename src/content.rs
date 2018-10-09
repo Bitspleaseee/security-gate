@@ -1,7 +1,7 @@
 //! API-routes to manage content.
 use rocket::response::NamedFile;
 use rocket_contrib::Json;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::net::{SocketAddr, ToSocketAddrs};
 use std::path::{Path, PathBuf};
 use tarpc::sync::client::{ClientExt, Options};
 
@@ -19,10 +19,14 @@ use crate::JsonResponseResult;
 
 lazy_static! {
     static ref CONTROLLER_IP: SocketAddr = match std::env::var("CONTROLLER_ADDRESS") {
-        Ok(value) => value.parse().expect("Invalid formatted CONTROLLER_ADDRESS"),
+        Ok(value) => value
+            .to_socket_addrs()
+            .expect("Unable to perform CONTROLLER_ADDRESS resolving")
+            .next()
+            .expect(&format!("Unable to resolve '{}'", value)),
         Err(_) => {
             warn!("CONTROLLER_ADDRESS is not set, using '127.0.0.1:10000'");
-            SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 10000)
+            SocketAddr::from(([127, 0, 0, 1], 10000))
         }
     };
 }

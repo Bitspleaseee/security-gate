@@ -3,8 +3,7 @@ use rocket_contrib::Json;
 
 use std::convert::TryInto;
 use std::io;
-use std::net::SocketAddr;
-use std::net::{IpAddr, Ipv4Addr};
+use std::net::{SocketAddr, ToSocketAddrs};
 use tarpc::sync::client::{ClientExt, Options};
 
 use datatypes::auth::requests::RegisterUserPayload;
@@ -19,10 +18,14 @@ use crate::JsonResponseResult;
 
 lazy_static! {
     static ref AUTH_IP: SocketAddr = match std::env::var("AUTH_ADDRESS") {
-        Ok(value) => value.parse().expect("Invalid formatted AUTH_ADDRESS"),
+        Ok(value) => value
+            .to_socket_addrs()
+            .expect("Unable to perform AUTH_ADDRESS resolving")
+            .next()
+            .expect(&format!("Unable to resolve '{}'", value)),
         Err(_) => {
-            warn!("AUTH_ADDRESS is not set, using 'localhost:10001'");
-            SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 10001)
+            warn!("AUTH_ADDRESS is not set, using '127.0.0.1:10001'");
+            SocketAddr::from(([127, 0, 0, 1], 10001))
         }
     };
 }
