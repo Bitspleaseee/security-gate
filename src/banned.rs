@@ -162,9 +162,9 @@ fn banned_message() -> &'static str {
 
 /// Ban or unban users.
 ///
-/// If you are admin, you can ban or unban users.
-/// Types you can send in: 'BAN', 'UNBAN'.
-/// Types I can get back: 'IPBANNED', 'IPUNBANNED'.
+/// If you are admin, you can ban and unban users, and change user roles.
+/// Request types: 'BAN_IP', 'UNBAN_IP', 'SET_USER_ROLE'.
+/// Return types: 'IP_BANNED', 'IP_UNBANNED' 'CHANGED_ROLE'.
 ///
 /// # Example
 ///
@@ -172,7 +172,7 @@ fn banned_message() -> &'static str {
 ///
 ///´´´json
 ///{
-///  "type": "BAN"
+///  "type": "BAN_IP"
 ///  "payload": {
 ///      "ip": 195.168.1.2
 ///  }
@@ -183,7 +183,7 @@ fn banned_message() -> &'static str {
 ///
 ///´´´json
 ///{
-///  "type": "IPBANNED",
+///  "type": "IP_BANNED",
 ///  "payload": {
 ///      "ip": 195.168.1.2
 ///  }
@@ -195,21 +195,23 @@ pub fn post_admin(
     req: Option<Json<AdminRequest>>,
     banned_ips: State<Arc<RwLock<HashSet<IpAddr>>>>,
 ) -> JsonResponseResult<AdminSuccess> {
+    info!("asdasdadsasdasdadsasdasdadsasdasdadsasdasdads");
     let req = req
         .ok_or(ContentError::InvalidContent)
         .map_err(|e| Json(e.into()))?; // If invalid request give error.
 
     // Check what role the user has (and that a user is valid):
+    info!("asdasdadsasdasdadsasdasdadsasdasdadsasdasdads");
     let role = connect_to_auth()
         .map_err(Json)?
         .get_user_role(token)
         .map_err(|e| Json(e.into()))?;
-
+    info!("asdasdadsasdasdadsasdasdadsasdasdadsasdasdads");
     // Only admins can do something here (return with error if not admin)
     if role < Role::Admin {
         Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
     }
-
+    info!("asdasdadsasdasdadsasdasdadsasdasdadsasdasdads");
     use datatypes::admin::requests::AdminRequest::*;
     match req.into_inner() {
         BanIp(p) => {
@@ -251,6 +253,18 @@ pub fn post_admin(
                 info!("tried to unban already unbanned ip {}", p.ip);
             }
             Ok(AdminSuccess::IpUnbanned)
+        }
+        SetUserRole(p) => {
+            connect_to_auth()
+                .map_err(Json)?
+                .set_user_role(p)
+                .map_err(|e| {
+                    error!("Error updating role: {:?}", e);
+                    Json(e.into())
+                })?;
+
+            debug!("Successfully updated role");
+            Ok(AdminSuccess::ChangedRole)
         }
     }.map(Json)
 }
