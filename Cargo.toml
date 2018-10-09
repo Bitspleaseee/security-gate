@@ -17,6 +17,7 @@ tarpc = { git = "https://github.com/google/tarpc.git", branch = "master" }
 tarpc-plugins = { git = "https://github.com/google/tarpc", rev = "5e4b97e" }
 serde = "1.0"
 serde_derive = "1.0"
+rpassword = "2.0.0"
 datatypes = { git = "https://github.com/Bitspleaseee/datatypes.git" }
 
 [dependencies.rocket_contrib]

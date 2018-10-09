@@ -8,4 +8,5 @@ service! {
     rpc deauthenticate(payload: Token) -> () | AuthError;
     rpc register(payload: RegisterUserPayload) -> AddUserPayload | AuthError;
     rpc get_user_role(payload: Token) -> Role | AuthError;
+    rpc set_user_role(payload: SetUserRolePayload) -> () | AuthError;
 }

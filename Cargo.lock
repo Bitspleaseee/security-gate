@@ -214,7 +214,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "datatypes"
 version = "0.1.0"
-source = "git+https://github.com/Bitspleaseee/datatypes.git#1843ff648b5bd67f4d94ef2151f8534b5699180c"
+source = "git+https://github.com/Bitspleaseee/datatypes.git#9a9761bf22da6e6535eee7a4b8db61da50aee849"
 dependencies = [
  "chrono 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -747,6 +747,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "rpassword"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc 0.2.43 (registry+https://github.com/rust-lang/crates.io-index)",
+ "winapi 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "rustc-demangle"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -798,6 +808,7 @@ dependencies = [
  "rocket 0.3.17 (registry+https://github.com/rust-lang/crates.io-index)",
  "rocket_codegen 0.3.17 (registry+https://github.com/rust-lang/crates.io-index)",
  "rocket_contrib 0.3.17 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rpassword 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
  "tarpc 0.12.1 (git+https://github.com/google/tarpc.git)",
@@ -1430,6 +1441,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum rocket 0.3.17 (registry+https://github.com/rust-lang/crates.io-index)" = "a61d746c68f1d357f6e011985570474c4af368aa81900320074098d34ed0c64e"
 "checksum rocket_codegen 0.3.17 (registry+https://github.com/rust-lang/crates.io-index)" = "7873d65adfa3e440ac373a28240341853da170913aad7e4207c0198389e5d0e9"
 "checksum rocket_contrib 0.3.17 (registry+https://github.com/rust-lang/crates.io-index)" = "4b2348e3b2458e173203f1e51f3b2e00495a092b70bd9506d2ce2ac64e129d14"
+"checksum rpassword 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d127299b02abda51634f14025aec43ae87a7aa7a95202b6a868ec852607d1451"
 "checksum rustc-demangle 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)" = "bcfe5b13211b4d78e5c2cadfebd7769197d95c639c35a50057eb4c05de811395"
 "checksum rustc_version 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)" = "138e3e0acb6c9fb258b19b67cb8abd63c00679d2851805ea151465464fe9030a"
 "checksum ryu 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)" = "7153dd96dade874ab973e098cb62fcdbb89a03682e46b144fd09550998d4a4a7"

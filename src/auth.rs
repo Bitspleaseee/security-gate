@@ -1,13 +1,15 @@
 use rocket::http::{Cookie, Cookies};
 use rocket_contrib::Json;
 
+use std::convert::TryInto;
+use std::io;
 use std::net::SocketAddr;
 use std::net::{IpAddr, Ipv4Addr};
 use tarpc::sync::client::{ClientExt, Options};
 
-use datatypes::auth::requests::AuthRequest;
-use datatypes::auth::responses::{AuthError, AuthSuccess};
-use datatypes::content::responses::*;
+use datatypes::auth::requests::RegisterUserPayload;
+use datatypes::auth::requests::{AuthRequest, SetUserRolePayload};
+use datatypes::auth::responses::{AuthError, AuthSuccess, Role};
 use datatypes::error::ResponseError;
 use datatypes::valid::token::USER_TOKEN_NAME;
 
@@ -141,4 +143,76 @@ pub fn auth(
             Ok(Json(AuthSuccess::UserRegistered))
         }
     }
+}
+
+pub fn create_admin() {
+    let auth = connect_to_auth().expect("Unable to connect to the auth service");
+    let controller = connect_to_controller().expect("Unable to connect to the controller");
+
+    println!("Creating admin account");
+
+    let mut username = "username".to_string().try_into().unwrap();
+    let mut email = "user@name.com".to_string().try_into().unwrap();
+    let mut password = "Password1".to_string().try_into().unwrap();
+
+    println!("Username: ");
+    loop {
+        let mut string = String::new();
+        io::stdin().read_line(&mut string).unwrap();
+
+        match string.trim().to_string().try_into() {
+            Ok(value) => {
+                username = value;
+                break;
+            }
+            Err(_) => println!("Invalid username"),
+        };
+    }
+
+    println!("Email: ");
+    loop {
+        let mut string = String::new();
+        io::stdin().read_line(&mut string).unwrap();
+
+        match string.trim().to_string().try_into() {
+            Ok(value) => {
+                email = value;
+                break;
+            }
+            Err(_) => println!("Invalid email"),
+        };
+    }
+
+    loop {
+        let string = rpassword::prompt_password_stdout("Password: ").unwrap();
+
+        match string.trim().to_string().try_into() {
+            Ok(value) => {
+                password = value;
+                break;
+            }
+            Err(_) => println!("Invalid password"),
+        };
+    }
+
+    let p = RegisterUserPayload {
+        username,
+        email,
+        password,
+    };
+
+    let user = auth
+        .register(p)
+        .expect("Failed to register user in the auth service");
+    let user = controller
+        .add_user(user)
+        .expect("Failed to register user in the controller");
+
+    let p = SetUserRolePayload {
+        id: user.id,
+        role: Role::Admin,
+    };
+    auth.set_user_role(p).expect("Failed to set user role");
+
+    println!("Account created successfully\n{:#?}", user);
 }

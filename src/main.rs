@@ -47,6 +47,12 @@ fn main() {
                 .long("verbose")
                 .multiple(true)
                 .help("Increases logging verbosity each use for up to 3 times"),
+        ).arg(
+            clap::Arg::with_name("admin")
+                .short("a")
+                .long("admin")
+                .multiple(true)
+                .help("Create an andmin account"),
         ).get_matches();
 
     let verbosity: u64 = cmd_arguments.occurrences_of("verbose");
@@ -68,6 +74,12 @@ fn main() {
             "9234".to_string()
         }
     };
+
+    // Create admin
+    let admin: u64 = cmd_arguments.occurrences_of("admin");
+    if admin >= 1 {
+        auth::create_admin();
+    }
 
     // Configuring rocket:
     let config = Config::build(Environment::Staging)
