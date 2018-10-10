@@ -93,8 +93,10 @@ fn main() {
         .attach(logging::RocketLogger)
         .attach(banned::BanIpAddrs::default())
         .attach(ModifyResponseHeaders)
-        .mount("/", routes![content::static_file, banned::banned_message])
         .mount(
+            "/",
+            routes![content::index, content::static_file, banned::banned_message],
+        ).mount(
             "/api/",
             routes![
                 banned::post_admin,
@@ -124,11 +126,9 @@ impl Fairing for ModifyResponseHeaders {
         }
     }
     fn on_response(&self, _: &Request, res: &mut Response) {
-        res.set_header(
-            Header::new(
-                "Content-Security-Policy",
-                "default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self';"
-            )
-        );
+        res.set_header(Header::new(
+            "Content-Security-Policy",
+            "default-src 'self' style-src 'unsafe-inline'",
+        ));
     }
 }
