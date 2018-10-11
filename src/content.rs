@@ -45,7 +45,8 @@ fn is_admin_or_mod(token: Option<Token>) -> Result<bool, ResponseError> {
             .map_err(|e| {
                 error!("Failed to connect to auth service: {:?}", e);
                 e
-            })?.get_user_role(t)?
+            })?.get_user(t)?
+            .1
             >= Role::Moderator)
     })
 }
@@ -639,9 +640,9 @@ pub fn post_content(
     info!("received json request: {:?}", req);
 
     // Check what role the user has (and that a user is valid):
-    let role = connect_to_auth()
+    let (id, role) = connect_to_auth()
         .map_err(Json)?
-        .get_user_role(token)
+        .get_user(token)
         .map_err(|e| Json(e.into()))?;
 
     match req.into_inner() {
@@ -702,8 +703,22 @@ pub fn post_content(
                     Json(e.into())
                 })
         }
-        AddThread(p) => {
+        AddThread(mut p) => {
             // Relays what is sent back to the user
+
+            // Reject the request if the user has added an incorrect user id
+            if p.user_id.is_some() && id != p.user_id.unwrap() {
+                warn!(
+                    "User ({:?}) tried to submit a request on behalf of user ({:?})",
+                    id,
+                    p.user_id.unwrap()
+                );
+                Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
+            }
+
+            // Set the correct user id
+            p.user_id = Some(id);
+
             info!("Forwarding a 'add-thread' request");
             connect_to_controller()
                 .map_err(Json)?
@@ -716,7 +731,20 @@ pub fn post_content(
                     Json(e.into())
                 })
         }
-        EditThread(p) => {
+        EditThread(mut p) => {
+            // Reject the request if the user has added an incorrect user id
+            if p.user_id.is_some() && id != p.user_id.unwrap() {
+                warn!(
+                    "User ({:?}) tried to submit a request on behalf of user ({:?})",
+                    id,
+                    p.user_id.unwrap()
+                );
+                Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
+            }
+
+            // Set the correct user id
+            p.user_id = Some(id);
+
             // Relays what is sent back to the user
             info!("Forwarding a 'edit-thread' request");
             connect_to_controller()
@@ -730,7 +758,20 @@ pub fn post_content(
                     Json(e.into())
                 })
         }
-        HideThread(p) => {
+        HideThread(mut p) => {
+            // Reject the request if the user has added an incorrect user id
+            if p.user_id.is_some() && id != p.user_id.unwrap() {
+                warn!(
+                    "User ({:?}) tried to submit a request on behalf of user ({:?})",
+                    id,
+                    p.user_id.unwrap()
+                );
+                Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
+            }
+
+            // Set the correct user id
+            p.user_id = Some(id);
+
             // Relays what is sent back to the user
             info!("Forwarding a 'hide-thread' request");
             connect_to_controller()
@@ -744,7 +785,20 @@ pub fn post_content(
                     Json(e.into())
                 })
         }
-        AddComment(p) => {
+        AddComment(mut p) => {
+            // Reject the request if the user has added an incorrect user id
+            if p.user_id.is_some() && id != p.user_id.unwrap() {
+                warn!(
+                    "User ({:?}) tried to submit a request on behalf of user ({:?})",
+                    id,
+                    p.user_id.unwrap()
+                );
+                Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
+            }
+
+            // Set the correct user id
+            p.user_id = Some(id);
+
             // Relays what is sent back to the user
             info!("Forwarding a 'add-comment' request");
             connect_to_controller()
@@ -758,7 +812,20 @@ pub fn post_content(
                     Json(e.into())
                 })
         }
-        EditComment(p) => {
+        EditComment(mut p) => {
+            // Reject the request if the user has added an incorrect user id
+            if p.user_id.is_some() && id != p.user_id.unwrap() {
+                warn!(
+                    "User ({:?}) tried to submit a request on behalf of user ({:?})",
+                    id,
+                    p.user_id.unwrap()
+                );
+                Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
+            }
+
+            // Set the correct user id
+            p.user_id = Some(id);
+
             // Relays what is sent back to the user
             info!("Forwarding a 'edit-comment' request");
             connect_to_controller()
@@ -772,7 +839,20 @@ pub fn post_content(
                     Json(e.into())
                 })
         }
-        HideComment(p) => {
+        HideComment(mut p) => {
+            // Reject the request if the user has added an incorrect user id
+            if p.user_id.is_some() && id != p.user_id.unwrap() {
+                warn!(
+                    "User ({:?}) tried to submit a request on behalf of user ({:?})",
+                    id,
+                    p.user_id.unwrap()
+                );
+                Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
+            }
+
+            // Set the correct user id
+            p.user_id = Some(id);
+
             // Relays what is sent back to the user
             info!("Forwarding a 'hide-comment' request");
             connect_to_controller()
@@ -786,21 +866,24 @@ pub fn post_content(
                     Json(e.into())
                 })
         }
-        AddUser(p) => {
-            // Relays what is sent back to the user
-            info!("Forwarding a 'add-user' request");
-            connect_to_controller()
-                .map_err(Json)?
-                .add_user(p)
-                .map(|v| {
-                    info!("Returning success from 'add-user' request");
-                    Json(ContentSuccess::User(v))
-                }).map_err(|e| {
-                    error!("Unable to 'add-user': {:?}", e);
-                    Json(e.into())
-                })
+        AddUser(_p) => {
+            info!("Recieved AddUser request");
+            Err(Json(ResponseError::Unauthorized))
         }
-        EditUser(p) => {
+        EditUser(mut p) => {
+            // Reject the request if the user has added an incorrect user id
+            if p.id.is_some() && id != p.id.unwrap() {
+                warn!(
+                    "User ({:?}) submitted a request on behalf of user ({:?})",
+                    id,
+                    p.id.unwrap()
+                );
+                Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
+            }
+
+            // Set the correct user id
+            p.id = Some(id);
+
             // Relays what is sent back to the user
             info!("Forwarding a 'edit-user' request");
             connect_to_controller()

@@ -195,23 +195,23 @@ pub fn post_admin(
     req: Option<Json<AdminRequest>>,
     banned_ips: State<Arc<RwLock<HashSet<IpAddr>>>>,
 ) -> JsonResponseResult<AdminSuccess> {
-    info!("asdasdadsasdasdadsasdasdadsasdasdadsasdasdads");
+    info!("post_admin");
     let req = req
         .ok_or(ContentError::InvalidContent)
         .map_err(|e| Json(e.into()))?; // If invalid request give error.
 
     // Check what role the user has (and that a user is valid):
-    info!("asdasdadsasdasdadsasdasdadsasdasdadsasdasdads");
-    let role = connect_to_auth()
+    info!("Checking token");
+    let (id, role) = connect_to_auth()
         .map_err(Json)?
-        .get_user_role(token)
+        .get_user(token)
         .map_err(|e| Json(e.into()))?;
-    info!("asdasdadsasdasdadsasdasdadsasdasdadsasdasdads");
+
+    info!("Id: {:?}, role: {:?}", id, role);
     // Only admins can do something here (return with error if not admin)
     if role < Role::Admin {
         Err(ResponseError::Unauthorized).map_err(|e| Json(e))?;
     }
-    info!("asdasdadsasdasdadsasdasdadsasdasdadsasdasdads");
     use datatypes::admin::requests::AdminRequest::*;
     match req.into_inner() {
         BanIp(p) => {
@@ -230,9 +230,9 @@ pub fn post_admin(
             // true  => IpAddr is now banned
             // false => IpAddr is already banned
             if res {
-                info!("banned ip {}", p.ip);
+                info!("Banned ip {}", p.ip);
             } else {
-                info!("tried to ban already banned ip {}", p.ip);
+                info!("Tried to ban already banned ip {}", p.ip);
             }
             Ok(AdminSuccess::IpBanned)
         }
@@ -248,9 +248,9 @@ pub fn post_admin(
             // true  => IpAddr is now unbanned
             // false => IpAddr is already unbanned
             if res {
-                info!("unbanned ip {}", p.ip);
+                info!("Unbanned ip {}", p.ip);
             } else {
-                info!("tried to unban already unbanned ip {}", p.ip);
+                info!("Tried to unban already unbanned ip {}", p.ip);
             }
             Ok(AdminSuccess::IpUnbanned)
         }
