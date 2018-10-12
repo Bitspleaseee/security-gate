@@ -140,10 +140,5 @@ impl Fairing for ModifyResponseHeaders {
             kind: Kind::Response,
         }
     }
-    fn on_response(&self, _: &Request, res: &mut Response) {
-        res.set_header(Header::new(
-            "Content-Security-Policy",
-            "default-src 'self' style-src 'unsafe-inline'",
-        ));
-    }
+    fn on_response(&self, _: &Request, res: &mut Response) {}
 }
